@@ -1,11 +1,23 @@
 #include "stdafx.h"
 #include "CircleShape.hpp"
 
-CircleShape::CircleShape(sf::Vector2f position, float radius) :
-	m_position(position), m_radius(radius)
+#include "Collision/Collision.hpp"
+
+CircleShape::CircleShape(sf::Vector2f position, float radius)
 {
+	m_shape = BODY_SHAPE::Circle;
+
+	m_position = position;
+	m_radius = radius;
+
 	m_renderBody.setSize({m_radius * 2.f, m_radius * 2.f});
-	m_renderBody.setOrigin(m_renderBody.getSize() / 2.f);
+
+	sf::Vector2f halfSize = m_renderBody.getSize() / 2.f;
+	m_renderBody.setOrigin(halfSize);
+
+
+	m_aabb.lowerBound = { m_position - halfSize };
+	m_aabb.upperBound = { m_position + halfSize };
 
 	m_renderBody.setPosition(position);
 	static sf::Texture texture;
@@ -14,7 +26,12 @@ CircleShape::CircleShape(sf::Vector2f position, float radius) :
 	m_renderBody.setTexture(&texture);
 }
 
-void CircleShape::Render(sf::RenderWindow& window)
+void CircleShape::SetRadius(float radius)
 {
-	window.draw(m_renderBody);
+	m_radius = radius;
+}
+
+float CircleShape::GetRadius()
+{
+	return m_radius;
 }

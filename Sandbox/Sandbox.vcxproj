@@ -98,17 +98,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\Collision\Collision.hpp" />
+    <ClInclude Include="include\Collision\CollisionResolver.hpp" />
+    <ClInclude Include="include\Collision\ContactListener.hpp" />
     <ClInclude Include="include\Dynamics\CircleShape.hpp" />
+    <ClInclude Include="include\Dynamics\RectangleShape.hpp" />
+    <ClInclude Include="include\Dynamics\RigidBodies.hpp" />
     <ClInclude Include="include\Dynamics\RigidBody.hpp" />
     <ClInclude Include="include\Application.hpp" />
+    <ClInclude Include="include\Dynamics\RigidBodyManager.hpp" />
     <ClInclude Include="include\GJK.hpp" />
     <ClInclude Include="include\Math.hpp" />
     <ClInclude Include="include\Random.hpp" />
     <ClInclude Include="pch\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="include\Collision\Collision.cpp" />
+    <ClCompile Include="include\Collision\CollisionResolver.cpp" />
+    <ClCompile Include="include\Collision\ContactListener.cpp" />
     <ClCompile Include="include\Dynamics\CircleShape.cpp" />
+    <ClCompile Include="include\Dynamics\RectangleShape.cpp" />
     <ClCompile Include="include\Dynamics\RigidBody.cpp" />
+    <ClCompile Include="include\Dynamics\RigidBodyManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

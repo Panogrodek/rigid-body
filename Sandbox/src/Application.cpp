@@ -6,6 +6,10 @@ Here we create window, and do all of the technical stuff of the Application
 Application::Application()
 {
 	Init();
+
+	RigidBodyManager::Init();
+	RigidBodyManager::AddBody(new CircleShape({ 0.f,0.f }, 50.f));
+	RigidBodyManager::AddBody(new CircleShape({ -50.f,0.f }, 20.f));
 }
 
 Application::~Application()
@@ -26,8 +30,7 @@ void Application::Run()
 void Application::Init()
 {
 	InitWindow();
-
-	circle = CircleShape({50.f,50.f},50.f);
+	m_dt.restart();
 }
 
 void Application::InitWindow()
@@ -42,14 +45,33 @@ void Application::InitWindow()
 
 void Application::Update()
 {
+	float frameTime = m_dt.getElapsedTime().asSeconds();
+	m_dt.restart();
 
+	double t = 0.0;
+	m_timeAccumulator += frameTime;
+
+	//first update the movement
+
+	while (m_timeAccumulator >= m_physicsTimeStep)
+	{
+		RigidBodyManager::Update(m_physicsTimeStep);
+		m_timeAccumulator -= m_physicsTimeStep;
+		t += m_physicsTimeStep;
+	}
+
+	//broad phase collision
+	ContactListener::CheckForCollisions();
+
+	//narrow phase collision
+	CollisionResolver::ResolveCollisions();
 }
 
 void Application::Render()
 {
 	m_window.clear();
 
-	circle.Render(m_window);
+	RigidBodyManager::Render(m_window);
 
 	m_window.display();
 }

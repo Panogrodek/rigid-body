@@ -1,14 +1,13 @@
 #pragma once
+#include "RigidBody.hpp"
 
-class CircleShape {
+class CircleShape : public RigidBody{
 public:
 	CircleShape() {};
 	CircleShape(sf::Vector2f position, float radius);
 
-	void Render(sf::RenderWindow& window);
+	void SetRadius(float radius);
+	float GetRadius();
 private:
-	sf::RectangleShape m_renderBody;
-
-	sf::Vector2f m_position{};
 	float m_radius = 0.f;
 };

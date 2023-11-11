@@ -29,6 +29,12 @@
     </ClInclude>
     <ClInclude Include="include\Dynamics\RigidBody.hpp" />
     <ClInclude Include="include\Dynamics\CircleShape.hpp" />
+    <ClInclude Include="include\Collision\ContactListener.hpp" />
+    <ClInclude Include="include\Collision\CollisionResolver.hpp" />
+    <ClInclude Include="include\Dynamics\RectangleShape.hpp" />
+    <ClInclude Include="include\Dynamics\RigidBodyManager.hpp" />
+    <ClInclude Include="include\Dynamics\RigidBodies.hpp" />
+    <ClInclude Include="include\Collision\Collision.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -43,6 +49,11 @@
     </ClCompile>
     <ClCompile Include="include\Dynamics\RigidBody.cpp" />
     <ClCompile Include="include\Dynamics\CircleShape.cpp" />
+    <ClCompile Include="include\Collision\ContactListener.cpp" />
+    <ClCompile Include="include\Collision\CollisionResolver.cpp" />
+    <ClCompile Include="include\Dynamics\RectangleShape.cpp" />
+    <ClCompile Include="include\Dynamics\RigidBodyManager.cpp" />
+    <ClCompile Include="include\Collision\Collision.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="openal32.dll" />

@@ -2,9 +2,12 @@
 
 #include "stdafx.h"
 #include "Random.hpp"
-#include "GJK.hpp"
 
-#include "Dynamics/CircleShape.hpp"
+#include "Dynamics/RigidBodies.hpp"
+
+#include "Collision/ContactListener.hpp"
+#include "Collision/CollisionResolver.hpp"
+#include "Dynamics/RigidBodyManager.hpp"
 
 class Application
 {
@@ -23,5 +26,8 @@ private:
 	virtual void PollEvents();
 
 	sf::RenderWindow m_window;
-	CircleShape circle;
+
+	sf::Clock m_dt;
+	float m_timeAccumulator = 0.f;
+	float m_physicsTimeStep = 0.01f;
 };
