@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "RigidBodyManager.hpp"
-
-#include "CircleShape.hpp"
+#include "Collision/Collision.hpp"
 
 std::unordered_map<int, RigidBody*>  RigidBodyManager::m_bodies;
 int RigidBodyManager::m_count;
@@ -44,7 +43,15 @@ void RigidBodyManager::Destroy()
 void RigidBodyManager::Update(float t)
 {
 	for (auto& body : m_bodies)
-		body.second->Update(t);
+		body.second->Step(t,{0.f,-0.00f});
+
+	Collision::Update();
+
+	//broad phase collision
+	//ContactListener::CheckForCollisions();
+
+	//narrow phase collision
+	//CollisionResolver::ResolveCollisions();
 }
 
 void RigidBodyManager::Render(sf::RenderWindow& window)

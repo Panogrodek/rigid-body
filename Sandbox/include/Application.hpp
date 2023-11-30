@@ -3,10 +3,7 @@
 #include "stdafx.h"
 #include "Random.hpp"
 
-#include "Dynamics/RigidBodies.hpp"
-
-#include "Collision/ContactListener.hpp"
-#include "Collision/CollisionResolver.hpp"
+#include "Collision/Collision.hpp"
 #include "Dynamics/RigidBodyManager.hpp"
 
 class Application

@@ -4,6 +4,12 @@
     <Filter Include="include">
       <UniqueIdentifier>{89AF369E-F58E-B539-FEA6-40106A051C9B}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\Collision">
+      <UniqueIdentifier>{E4A37340-50BA-71D6-9931-FDF70587425E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Dynamics">
+      <UniqueIdentifier>{108B1FEC-FC83-3E3E-25B6-23C3110E1E4A}</UniqueIdentifier>
+    </Filter>
     <Filter Include="pch">
       <UniqueIdentifier>{809C880B-ECA5-887C-7521-9F7CE129947C}</UniqueIdentifier>
     </Filter>
@@ -14,6 +20,15 @@
   <ItemGroup>
     <ClInclude Include="include\Application.hpp">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Collision\Collision.hpp">
+      <Filter>include\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Dynamics\RigidBody.hpp">
+      <Filter>include\Dynamics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Dynamics\RigidBodyManager.hpp">
+      <Filter>include\Dynamics</Filter>
     </ClInclude>
     <ClInclude Include="include\GJK.hpp">
       <Filter>include</Filter>
@@ -27,16 +42,20 @@
     <ClInclude Include="pch\stdafx.h">
       <Filter>pch</Filter>
     </ClInclude>
-    <ClInclude Include="include\Dynamics\RigidBody.hpp" />
-    <ClInclude Include="include\Dynamics\CircleShape.hpp" />
-    <ClInclude Include="include\Collision\ContactListener.hpp" />
-    <ClInclude Include="include\Collision\CollisionResolver.hpp" />
-    <ClInclude Include="include\Dynamics\RectangleShape.hpp" />
-    <ClInclude Include="include\Dynamics\RigidBodyManager.hpp" />
-    <ClInclude Include="include\Dynamics\RigidBodies.hpp" />
-    <ClInclude Include="include\Collision\Collision.hpp" />
+    <ClInclude Include="include\Collision\SatCollision.hpp">
+      <Filter>include\Collision</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="include\Collision\Collision.cpp">
+      <Filter>include\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="include\Dynamics\RigidBody.cpp">
+      <Filter>include\Dynamics</Filter>
+    </ClCompile>
+    <ClCompile Include="include\Dynamics\RigidBodyManager.cpp">
+      <Filter>include\Dynamics</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch\stdafx.cpp">
       <Filter>pch</Filter>
@@ -47,13 +66,9 @@
     <ClCompile Include="src\GJK.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="include\Dynamics\RigidBody.cpp" />
-    <ClCompile Include="include\Dynamics\CircleShape.cpp" />
-    <ClCompile Include="include\Collision\ContactListener.cpp" />
-    <ClCompile Include="include\Collision\CollisionResolver.cpp" />
-    <ClCompile Include="include\Dynamics\RectangleShape.cpp" />
-    <ClCompile Include="include\Dynamics\RigidBodyManager.cpp" />
-    <ClCompile Include="include\Collision\Collision.cpp" />
+    <ClCompile Include="include\Collision\SatCollision.cpp">
+      <Filter>include\Collision</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="openal32.dll" />

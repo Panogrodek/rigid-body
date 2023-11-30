@@ -3,9 +3,9 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 
 constexpr int INVALID_ID = -1;
+constexpr float PI = 3.1415926535897932384626433832795f;
 
-enum class BODY_TYPE	{ None = 0, Static = 1, Kinematic = 2, Dynamic = 3 };
-enum class BODY_SHAPE	{ None = 0, Circle = 1, Rectangle = 2};
+enum class BODY_SHAPE	{ Circle = 0, Box = 1,};
 
 struct AABB {
 	sf::Vector2f lowerBound;
@@ -18,43 +18,70 @@ struct AABB {
 	float GetArea();
 };
 
+struct RigidBodyData {
+	float Density;
+	float Mass;
+	float Restitution;
+protected:
+	friend class RigidBody;
+	float InvMass;
+	float Area;
+};
+
 class RigidBody {
 public:
-	void Update(float t);
+	RigidBody(sf::Vector2f pos, RigidBodyData data, 
+		bool isStatic, float radius, float width, float height, BODY_SHAPE type);
 
+	void Step(float t, sf::Vector2f gravity);
 	void Render(sf::RenderWindow& window);
 	
 	//Modifiers
 	void Move(sf::Vector2f moveVec);
-	void Scale(float scalar);
 	void Rotate(float angle);
 
 	void SetPosition	(sf::Vector2f positionVec);
-	void SetVelocity	(sf::Vector2f velocityVec);
-	void SetAcceleration(sf::Vector2f accelerationVec);
-
+	void AddImpulse		(sf::Vector2f impulse);
 	//Accessors
-	BODY_TYPE GetType();
 	BODY_SHAPE GetShape();
-
-	AABB GetAABB();
 
 	sf::Vector2f GetPosition();
 	sf::Vector2f GetVelocity();
-	sf::Vector2f GetAcceleration();
+protected:
+	AABB GetAABB();
+	std::vector<sf::Vector2f> GetTransformedVertices();
 protected:
 	sf::Vector2f m_position;
-	sf::Vector2f m_velocity;
-	sf::Vector2f m_acceleration;
-	float m_mass;
+	sf::Vector2f m_linearVelocity;
+	float m_rotation;
+	float m_rotationalVelocity;
 
+	sf::Vector2f m_force;
+
+	RigidBodyData m_data;
+
+	bool m_isStatic;
+
+	float m_radius;
+	float m_height;
+	float m_width;
+
+	std::vector<int> m_triangles;
 	AABB m_aabb;
 
-
-	sf::RectangleShape m_renderBody;
-	BODY_TYPE m_type	= BODY_TYPE::None;
-	BODY_SHAPE m_shape  = BODY_SHAPE::None;
+	BODY_SHAPE m_shape;
 private:
+	std::vector<sf::Vector2f> m_transformedVertices;
+	std::vector<sf::Vector2f> m_vertices;
+
+	bool m_transformRequired;
+	bool m_aabbUpdateRequired;
+
+	void CreateBoxVertices();
+	void CreateBoxTriangles();
+private:
+	friend class Collision;
+	friend class SATCollision;
 	friend class RigidBodyManager;
 	int m_id = INVALID_ID;
 };

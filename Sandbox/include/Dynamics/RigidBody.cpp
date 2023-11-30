@@ -1,47 +1,107 @@
 #include "stdafx.h"
 #include "RigidBody.hpp"
+#include "Collision/Collision.hpp"
 
-void RigidBody::Move(sf::Vector2f moveVec)
+RigidBody::RigidBody(sf::Vector2f pos, RigidBodyData data,
+	bool isStatic, float radius, float width, float height, BODY_SHAPE type)
 {
-	m_position += moveVec;
-	m_renderBody.setPosition(m_position);
+	m_position = pos;
+	m_linearVelocity = sf::Vector2f{ 0.f,0.f };
+	m_rotation = 0.f;
+	m_rotationalVelocity = 0.f;
+	
+	m_data = data;
+
+	m_force = sf::Vector2f{ 0.f,0.f };
+
+	m_isStatic = isStatic;
+	m_radius = radius;
+	m_width = width;
+	m_height = height;
+	m_shape = type;
+
+	if (type == BODY_SHAPE::Box) {
+		CreateBoxVertices();
+		CreateBoxTriangles();
+
+		m_transformedVertices = m_vertices;
+	}
+
+	m_transformRequired = true;
+	m_aabbUpdateRequired = true;
 }
 
-void RigidBody::Scale(float scalar)
+void RigidBody::Step(float t, sf::Vector2f gravity)
 {
-}
+	if (m_isStatic)
+		return;
 
-void RigidBody::Rotate(float angle)
-{
-}
+	m_linearVelocity = gravity * t;
+	m_position += m_linearVelocity * t;
 
-void RigidBody::Update(float t)
-{
-	//semi-implicid euler
-	m_velocity += m_acceleration * t;
-	m_position += m_velocity * t;
+	m_rotation += m_rotationalVelocity * t;
 
-	m_renderBody.setPosition(m_position);
+	m_force = sf::Vector2f{ 0.f,0.f };
+	m_transformRequired = true;
+	m_aabbUpdateRequired = true;
+
+	GetTransformedVertices();
 }
 
 void RigidBody::Render(sf::RenderWindow& window)
 {
-	window.draw(m_renderBody);
+	sf::RectangleShape body;
+	static sf::Texture texture;
+	switch (m_shape)
+	{
+	case BODY_SHAPE::Circle:
+		body.setSize(sf::Vector2f(2.f * m_radius, 2.f * m_radius));
+		body.setOrigin(body.getSize() / 2.f);
+		body.setPosition(m_position);
+
+		if (texture.getSize().x == 0.f)
+			texture.loadFromFile("res/circle.png");
+		body.setTexture(&texture);
+
+		window.draw(body);
+		break;
+	default:
+		std::vector<sf::Vertex> m_vertexes;
+		std::vector<sf::Vector2f> m_vertices = GetTransformedVertices();
+		for (auto& v : m_triangles)
+			m_vertexes.push_back(sf::Vertex(m_vertices[v]));
+
+		window.draw(m_vertexes.data(), m_vertexes.size(), sf::PrimitiveType::Triangles);
+		break;
+	}
+
+
 }
 
 void RigidBody::SetPosition(sf::Vector2f positionVec)
 {
 	m_position = positionVec;
+	m_aabbUpdateRequired = true;
+	m_transformRequired = true;
 }
 
-void RigidBody::SetVelocity(sf::Vector2f velocityVec)
+void RigidBody::Move(sf::Vector2f moveVec)
 {
-	m_velocity = velocityVec;
+	m_position += moveVec;
+	m_aabbUpdateRequired = true;
+	m_transformRequired = true;
 }
 
-void RigidBody::SetAcceleration(sf::Vector2f accelerationVec)
+void RigidBody::Rotate(float angle)
 {
-	m_acceleration = accelerationVec;
+	m_rotation += angle;
+	m_aabbUpdateRequired = true;
+	m_transformRequired = true;
+}
+
+void RigidBody::AddImpulse(sf::Vector2f impulse)
+{
+	m_force = impulse;
 }
 
 sf::Vector2f RigidBody::GetPosition()
@@ -51,17 +111,35 @@ sf::Vector2f RigidBody::GetPosition()
 
 sf::Vector2f RigidBody::GetVelocity()
 {
-	return m_velocity;
+	return m_linearVelocity;
 }
 
-sf::Vector2f RigidBody::GetAcceleration()
+void RigidBody::CreateBoxVertices()
 {
-	return m_acceleration;
+	float left = -m_width / 2.f;
+	float right = left + m_width;
+	float bottom = -m_height / 2.f;
+	float top = bottom + m_height;
+
+	std::vector<sf::Vector2f> vertices;
+	vertices.push_back(sf::Vector2f(left,	top));
+	vertices.push_back(sf::Vector2f(right,	top));
+	vertices.push_back(sf::Vector2f(right,	bottom));
+	vertices.push_back(sf::Vector2f(left,	bottom));
+
+	m_vertices = vertices;
 }
 
-BODY_TYPE RigidBody::GetType()
+void RigidBody::CreateBoxTriangles()
 {
-	return m_type;
+	std::vector<int> triangles;
+	triangles.push_back(0);
+	triangles.push_back(1);
+	triangles.push_back(2);
+	triangles.push_back(0);
+	triangles.push_back(2);
+	triangles.push_back(3);
+	m_triangles = triangles;
 }
 
 BODY_SHAPE RigidBody::GetShape()
@@ -71,7 +149,61 @@ BODY_SHAPE RigidBody::GetShape()
 
 AABB RigidBody::GetAABB()
 {
+	if (m_aabbUpdateRequired)
+	{
+		sf::Vector2f min;
+		sf::Vector2f max;
+		if (m_shape == BODY_SHAPE::Circle)
+		{
+			min = { m_position.x - m_radius, m_position.y - m_radius};
+			max = { m_position.x + m_radius, m_position.y + m_radius};
+		}
+		else
+		{
+			float minX =  INFINITY;
+			float minY =  INFINITY;
+			float maxX = -INFINITY;
+			float maxY = -INFINITY;
+			for (auto& v : m_vertices)
+			{
+				if (v.x < minX) { minX = v.x; }
+				if (v.x > maxX) { maxX = v.x; }
+				if (v.y < minY) { minY = v.y; }
+				if (v.y > maxY) { maxY = v.y; }
+			}
+			min = { minX, minY };
+			max = { maxX, maxY };
+		}
+
+		m_aabb.lowerBound = min;
+		m_aabb.upperBound = max;
+	}
+
+	m_aabbUpdateRequired = false;
 	return m_aabb;
+}
+
+std::vector<sf::Vector2f> RigidBody::GetTransformedVertices()
+{
+	if (m_transformRequired)
+	{
+		Collision::m_bodiesToUpdate.insert(this);
+		
+		float sin = sinf(m_rotation * PI/180.f );
+		float cos = cosf(m_rotation * PI/180.f );
+
+		for (int i = 0; i < m_vertices.size(); i++)
+		{
+			auto& v = m_vertices[i];
+			float rx = cos * v.x - sin * v.y;
+			float ry = sin * v.x - cos * v.y;
+
+			m_transformedVertices[i] = sf::Vector2f(rx + v.x + m_position.x, ry + v.y + m_position.y);
+		}
+	}
+
+	m_transformRequired = false;
+	return m_transformedVertices;
 }
 
 bool AABB::contains(sf::Vector2f point)

@@ -8,8 +8,20 @@ Application::Application()
 	Init();
 
 	RigidBodyManager::Init();
-	RigidBodyManager::AddBody(new CircleShape({ 0.f,0.f }, 50.f));
-	RigidBodyManager::AddBody(new CircleShape({ -50.f,0.f }, 20.f));
+	RigidBodyData d;
+	d.Density = 0.7f;
+	d.Mass = 10.f;
+	d.Restitution = 0.5f;
+
+	sf::Vector2f pos = { 10.f,10.f };
+
+	RigidBody* b = new RigidBody(pos,d,false,10.f,10.f,10.f,BODY_SHAPE::Box);
+	RigidBody* b1 = new RigidBody(pos*2.5f,d,false,10.f,0.f,0.f,BODY_SHAPE::Box);
+	b->Rotate(45.f);
+	//b1->Rotate(45.f);
+	RigidBodyManager::AddBody(b);
+	RigidBodyManager::AddBody(b1);
+
 }
 
 Application::~Application()
@@ -36,11 +48,11 @@ void Application::Init()
 void Application::InitWindow()
 {
 	sf::VideoMode mode;
-	mode.size = sf::Vector2u(1000, 1000);
+	mode.size = sf::Vector2u(2000, 1500); //TODO: na windows 11 to jest podwojone xd
 	m_window.create(mode, "", sf::Style::Close);
 	m_window.setFramerateLimit(60);
 
-	m_window.setView(sf::View({ {0.f, 0.f}, {1000.f, -1000.f} }));
+	m_window.setView(sf::View({ {0.f, 0.f}, {100.f, -100.f} }));
 }
 
 void Application::Update()
@@ -48,23 +60,27 @@ void Application::Update()
 	float frameTime = m_dt.getElapsedTime().asSeconds();
 	m_dt.restart();
 
-	double t = 0.0;
+	float t = 0.0f;
 	m_timeAccumulator += frameTime;
 
 	//first update the movement
 
+
 	while (m_timeAccumulator >= m_physicsTimeStep)
 	{
-		RigidBodyManager::Update(m_physicsTimeStep);
 		m_timeAccumulator -= m_physicsTimeStep;
 		t += m_physicsTimeStep;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+			RigidBodyManager::GetBodies().at(0)->Move({ 0.f,5.f * t });
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+			RigidBodyManager::GetBodies().at(0)->Move({ 0.f,-5.f * t });
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+			RigidBodyManager::GetBodies().at(0)->Move({ -5.f * t,0.f });
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+			RigidBodyManager::GetBodies().at(0)->Move({ 5.f * t,0.f });
+		RigidBodyManager::Update(m_physicsTimeStep);
 	}
 
-	//broad phase collision
-	ContactListener::CheckForCollisions();
-
-	//narrow phase collision
-	CollisionResolver::ResolveCollisions();
 }
 
 void Application::Render()
