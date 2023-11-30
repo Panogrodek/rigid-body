@@ -15,8 +15,8 @@ Application::Application()
 
 	sf::Vector2f pos = { 10.f,10.f };
 
-	RigidBody* b = new RigidBody(pos,d,false,10.f,10.f,10.f,BODY_SHAPE::Box);
-	RigidBody* b1 = new RigidBody(pos*2.5f,d,false,10.f,0.f,0.f,BODY_SHAPE::Box);
+	RigidBody* b = new RigidBody(pos,d,false,0.f,10.f, 10.f, BODY_SHAPE::Box);
+	RigidBody* b1 = new RigidBody(pos*2.5f,d,false,10.f,10.f,10.f,BODY_SHAPE::Box);
 	b->Rotate(45.f);
 	//b1->Rotate(45.f);
 	RigidBodyManager::AddBody(b);
@@ -48,7 +48,7 @@ void Application::Init()
 void Application::InitWindow()
 {
 	sf::VideoMode mode;
-	mode.size = sf::Vector2u(2000, 1500); //TODO: na windows 11 to jest podwojone xd
+	mode.size = sf::Vector2u(1000, 1000); //TODO: na windows 11 to jest podwojone xd
 	m_window.create(mode, "", sf::Style::Close);
 	m_window.setFramerateLimit(60);
 
@@ -103,7 +103,7 @@ void Application::PollEvents()
 			break;
 		case sf::Event::KeyPressed:
 			if (ev.key.code == sf::Keyboard::Escape)
-				m_window.close();;
+				m_window.close();
 			break;
 		}
 	}

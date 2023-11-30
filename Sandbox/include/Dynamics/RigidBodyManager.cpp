@@ -12,6 +12,7 @@ void RigidBodyManager::Init()
 
 void RigidBodyManager::AddBody(RigidBody* body)
 {
+	Collision::AddBody(body);
 	m_bodies[m_count] = body;
 	body->m_id = m_count;
 	m_count++;
@@ -19,11 +20,16 @@ void RigidBodyManager::AddBody(RigidBody* body)
 
 void RigidBodyManager::DeleteBody(int index)
 {
+	Collision::RemoveBody(index);
 	std::swap(m_bodies[index], m_bodies[m_count]);
+
 	delete m_bodies[m_count];
+	m_bodies.erase(m_count - 1);
 	m_count--;
 
-	m_bodies[index]->m_id = index;
+	if (index != m_count) {
+		m_bodies[index]->m_id = index;
+	}
 }
 
 void RigidBodyManager::DeleteBody(RigidBody* body)
@@ -58,6 +64,8 @@ void RigidBodyManager::Render(sf::RenderWindow& window)
 {
 	for (auto& body : m_bodies)
 		body.second->Render(window);
+
+	Collision::Render(window);
 }
 
 int RigidBodyManager::GetCount()

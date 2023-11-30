@@ -41,6 +41,8 @@ void RigidBody::Step(float t, sf::Vector2f gravity)
 
 	m_rotation += m_rotationalVelocity * t;
 
+	Collision::m_bodiesToUpdate.insert(this);
+
 	m_force = sf::Vector2f{ 0.f,0.f };
 	m_transformRequired = true;
 	m_aabbUpdateRequired = true;
@@ -81,6 +83,7 @@ void RigidBody::Render(sf::RenderWindow& window)
 void RigidBody::SetPosition(sf::Vector2f positionVec)
 {
 	m_position = positionVec;
+	Collision::m_bodiesToUpdate.insert(this);
 	m_aabbUpdateRequired = true;
 	m_transformRequired = true;
 }
@@ -88,6 +91,7 @@ void RigidBody::SetPosition(sf::Vector2f positionVec)
 void RigidBody::Move(sf::Vector2f moveVec)
 {
 	m_position += moveVec;
+	Collision::m_bodiesToUpdate.insert(this);
 	m_aabbUpdateRequired = true;
 	m_transformRequired = true;
 }
@@ -95,6 +99,7 @@ void RigidBody::Move(sf::Vector2f moveVec)
 void RigidBody::Rotate(float angle)
 {
 	m_rotation += angle;
+	Collision::m_bodiesToUpdate.insert(this);
 	m_aabbUpdateRequired = true;
 	m_transformRequired = true;
 }
@@ -164,7 +169,7 @@ AABB RigidBody::GetAABB()
 			float minY =  INFINITY;
 			float maxX = -INFINITY;
 			float maxY = -INFINITY;
-			for (auto& v : m_vertices)
+			for (auto& v : m_transformedVertices)
 			{
 				if (v.x < minX) { minX = v.x; }
 				if (v.x > maxX) { maxX = v.x; }
@@ -186,9 +191,7 @@ AABB RigidBody::GetAABB()
 std::vector<sf::Vector2f> RigidBody::GetTransformedVertices()
 {
 	if (m_transformRequired)
-	{
-		Collision::m_bodiesToUpdate.insert(this);
-		
+	{	
 		float sin = sinf(m_rotation * PI/180.f );
 		float cos = cosf(m_rotation * PI/180.f );
 
@@ -196,9 +199,9 @@ std::vector<sf::Vector2f> RigidBody::GetTransformedVertices()
 		{
 			auto& v = m_vertices[i];
 			float rx = cos * v.x - sin * v.y;
-			float ry = sin * v.x - cos * v.y;
+			float ry = sin * v.x + cos * v.y;
 
-			m_transformedVertices[i] = sf::Vector2f(rx + v.x + m_position.x, ry + v.y + m_position.y);
+			m_transformedVertices[i] = sf::Vector2f(rx + m_position.x, ry + m_position.y);
 		}
 	}
 

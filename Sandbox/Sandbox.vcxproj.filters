@@ -24,6 +24,9 @@
     <ClInclude Include="include\Collision\Collision.hpp">
       <Filter>include\Collision</Filter>
     </ClInclude>
+    <ClInclude Include="include\Collision\SatCollision.hpp">
+      <Filter>include\Collision</Filter>
+    </ClInclude>
     <ClInclude Include="include\Dynamics\RigidBody.hpp">
       <Filter>include\Dynamics</Filter>
     </ClInclude>
@@ -42,12 +45,15 @@
     <ClInclude Include="pch\stdafx.h">
       <Filter>pch</Filter>
     </ClInclude>
-    <ClInclude Include="include\Collision\SatCollision.hpp">
+    <ClInclude Include="include\Collision\DynamicTree.hpp">
       <Filter>include\Collision</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\Collision\Collision.cpp">
+      <Filter>include\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="include\Collision\SatCollision.cpp">
       <Filter>include\Collision</Filter>
     </ClCompile>
     <ClCompile Include="include\Dynamics\RigidBody.cpp">
@@ -66,7 +72,7 @@
     <ClCompile Include="src\GJK.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="include\Collision\SatCollision.cpp">
+    <ClCompile Include="include\Collision\DynamicTree.cpp">
       <Filter>include\Collision</Filter>
     </ClCompile>
   </ItemGroup>

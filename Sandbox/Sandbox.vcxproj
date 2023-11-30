@@ -98,25 +98,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\Collision\DynamicTree.hpp" />
     <ClInclude Include="include\Application.hpp" />
     <ClInclude Include="include\Collision\Collision.hpp" />
+    <ClInclude Include="include\Collision\SatCollision.hpp" />
     <ClInclude Include="include\Dynamics\RigidBody.hpp" />
     <ClInclude Include="include\Dynamics\RigidBodyManager.hpp" />
     <ClInclude Include="include\GJK.hpp" />
     <ClInclude Include="include\Math.hpp" />
     <ClInclude Include="include\Random.hpp" />
     <ClInclude Include="pch\stdafx.h" />
-    <ClInclude Include="include\Collision\SatCollision.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="include\Collision\DynamicTree.cpp" />
     <ClCompile Include="include\Collision\Collision.cpp" />
+    <ClCompile Include="include\Collision\SatCollision.cpp" />
     <ClCompile Include="include\Dynamics\RigidBody.cpp" />
     <ClCompile Include="include\Dynamics\RigidBodyManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="include\Collision\SatCollision.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\GJK.cpp" />
   </ItemGroup>

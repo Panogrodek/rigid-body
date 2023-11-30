@@ -47,9 +47,10 @@ public:
 
 	sf::Vector2f GetPosition();
 	sf::Vector2f GetVelocity();
+
 protected:
-	AABB GetAABB();
 	std::vector<sf::Vector2f> GetTransformedVertices();
+	AABB GetAABB();
 protected:
 	sf::Vector2f m_position;
 	sf::Vector2f m_linearVelocity;
@@ -67,10 +68,10 @@ protected:
 	float m_width;
 
 	std::vector<int> m_triangles;
-	AABB m_aabb;
 
 	BODY_SHAPE m_shape;
 private:
+	AABB m_aabb;
 	std::vector<sf::Vector2f> m_transformedVertices;
 	std::vector<sf::Vector2f> m_vertices;
 
@@ -83,5 +84,8 @@ private:
 	friend class Collision;
 	friend class SATCollision;
 	friend class RigidBodyManager;
+	friend class DynamicTree;
+
+	int m_nodeIndex = INVALID_ID;
 	int m_id = INVALID_ID;
 };
