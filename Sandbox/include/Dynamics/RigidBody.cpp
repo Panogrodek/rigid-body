@@ -11,6 +11,7 @@ RigidBody::RigidBody(sf::Vector2f pos, RigidBodyData data,
 	m_rotationalVelocity = 0.f;
 	
 	m_data = data;
+	m_data.InvMass = m_data.Mass == 0.f ? 0.f : 1.f / m_data.Mass;
 
 	m_force = sf::Vector2f{ 0.f,0.f };
 
@@ -29,14 +30,18 @@ RigidBody::RigidBody(sf::Vector2f pos, RigidBodyData data,
 
 	m_transformRequired = true;
 	m_aabbUpdateRequired = true;
+
+	GetTransformedVertices();
 }
 
-void RigidBody::Step(float t, sf::Vector2f gravity)
+void RigidBody::Step(float t)
 {
-	if (m_isStatic)
+	if (m_isStatic) {
+		GetTransformedVertices();
 		return;
+	}
 
-	m_linearVelocity = gravity * t;
+	m_linearVelocity += m_force/m_data.Mass * t;
 	m_position += m_linearVelocity * t;
 
 	m_rotation += m_rotationalVelocity * t;
@@ -190,7 +195,7 @@ AABB RigidBody::GetAABB()
 
 std::vector<sf::Vector2f> RigidBody::GetTransformedVertices()
 {
-	if (m_transformRequired)
+	if (m_transformRequired) //this is so fucking stupid im gonna cry
 	{	
 		float sin = sinf(m_rotation * PI/180.f );
 		float cos = cosf(m_rotation * PI/180.f );

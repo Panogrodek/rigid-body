@@ -8,8 +8,12 @@ class SATCollision {
 public:
 	static SATCollision Instance;
 
-	bool SatCollision(const RigidBody& body, const RigidBody& other, sf::Vector2f& MTV);
+	bool SatCollision(RigidBody& body, RigidBody& other, sf::Vector2f& MTV);
 	bool CircleCollision(const RigidBody& body, const RigidBody& other, sf::Vector2f& MTV);
+
+	//my eyes are burning
+	sf::Vector2f Normalize(sf::Vector2f v) const;
+	float DotProduct(sf::Vector2f v1, sf::Vector2f v2) const;
 private:
 	SATCollision();
 	~SATCollision();
@@ -28,8 +32,6 @@ private:
 	//very much temporary
 	float Length(sf::Vector2f v) const;
 	float Distance(sf::Vector2f v1, sf::Vector2f v2) const;
-	float DotProduct(sf::Vector2f v1, sf::Vector2f v2) const;
 	float CrossProduct(sf::Vector2f v1, sf::Vector2f v2) const;
 
-	sf::Vector2f Normalize(sf::Vector2f v) const;
 };

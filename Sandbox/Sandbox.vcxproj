@@ -98,9 +98,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\Collision\DynamicTree.hpp" />
     <ClInclude Include="include\Application.hpp" />
     <ClInclude Include="include\Collision\Collision.hpp" />
+    <ClInclude Include="include\Collision\DynamicTree.hpp" />
     <ClInclude Include="include\Collision\SatCollision.hpp" />
     <ClInclude Include="include\Dynamics\RigidBody.hpp" />
     <ClInclude Include="include\Dynamics\RigidBodyManager.hpp" />
@@ -110,8 +110,8 @@
     <ClInclude Include="pch\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\Collision\DynamicTree.cpp" />
     <ClCompile Include="include\Collision\Collision.cpp" />
+    <ClCompile Include="include\Collision\DynamicTree.cpp" />
     <ClCompile Include="include\Collision\SatCollision.cpp" />
     <ClCompile Include="include\Dynamics\RigidBody.cpp" />
     <ClCompile Include="include\Dynamics\RigidBodyManager.cpp" />

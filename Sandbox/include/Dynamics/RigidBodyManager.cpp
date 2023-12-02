@@ -49,7 +49,7 @@ void RigidBodyManager::Destroy()
 void RigidBodyManager::Update(float t)
 {
 	for (auto& body : m_bodies)
-		body.second->Step(t,{0.f,-0.00f});
+		body.second->Step(t);
 
 	Collision::Update();
 

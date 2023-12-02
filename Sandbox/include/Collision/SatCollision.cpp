@@ -6,11 +6,11 @@
 
 SATCollision SATCollision::Instance;
 
-bool SATCollision::SatCollision(const RigidBody& body, const RigidBody& other, sf::Vector2f& MTV) {
+bool SATCollision::SatCollision(RigidBody& body, RigidBody& other, sf::Vector2f& MTV) {
 	float minOverlap = INF;
 
-	std::vector<sf::Vector2f> bodyVertices = body.m_transformedVertices;
-	std::vector<sf::Vector2f> otherVertices = other.m_transformedVertices;
+	std::vector<sf::Vector2f> bodyVertices = body.GetTransformedVertices();
+	std::vector<sf::Vector2f> otherVertices = other.GetTransformedVertices();
 
 	uint32_t bodyCount = body.m_transformedVertices.size();
 	uint32_t otherCount = other.m_transformedVertices.size();

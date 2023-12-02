@@ -22,9 +22,9 @@ struct RigidBodyData {
 	float Density;
 	float Mass;
 	float Restitution;
+	float InvMass;
 protected:
 	friend class RigidBody;
-	float InvMass;
 	float Area;
 };
 
@@ -33,7 +33,7 @@ public:
 	RigidBody(sf::Vector2f pos, RigidBodyData data, 
 		bool isStatic, float radius, float width, float height, BODY_SHAPE type);
 
-	void Step(float t, sf::Vector2f gravity);
+	void Step(float t);
 	void Render(sf::RenderWindow& window);
 	
 	//Modifiers

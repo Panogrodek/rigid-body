@@ -8,19 +8,30 @@ Application::Application()
 	Init();
 
 	RigidBodyManager::Init();
-	RigidBodyData d;
-	d.Density = 0.7f;
-	d.Mass = 10.f;
-	d.Restitution = 0.5f;
+	RigidBodyData d1;
+	d1.Density = 0.7f;
+	d1.Mass = 1.f;
+	d1.Restitution = 1.50f;
+
+	RigidBodyData d2;
+	d2.Density = 0.7f;
+	d2.Mass = 1.f;
+	d2.Restitution = 1.00f;
 
 	sf::Vector2f pos = { 10.f,10.f };
+	sf::Vector2f pos2 = { -20.f,0.f };
 
-	RigidBody* b = new RigidBody(pos,d,false,0.f,10.f, 10.f, BODY_SHAPE::Box);
-	RigidBody* b1 = new RigidBody(pos*2.5f,d,false,10.f,10.f,10.f,BODY_SHAPE::Box);
-	b->Rotate(45.f);
-	//b1->Rotate(45.f);
+	RigidBody* b = new RigidBody(pos ,d1,false,0.f,10.f, 10.f, BODY_SHAPE::Box);
+	RigidBody* b2 = new RigidBody(pos + pos2*2.f,d1,true,10.f,10.f,10.f,BODY_SHAPE::Box);
+	RigidBody* b3 = new RigidBody(pos - pos2,d1,false,10.f,10.f,10.f,BODY_SHAPE::Box);
+	RigidBody* b4 = new RigidBody({0.f,-25.f}, d2, true, 10.f, 100.f, 10.f, BODY_SHAPE::Box);
+	//b->Rotate(45.f);
+	b4->Rotate(22.5f);
 	RigidBodyManager::AddBody(b);
-	RigidBodyManager::AddBody(b1);
+	RigidBodyManager::AddBody(b2);
+	RigidBodyManager::AddBody(b3);
+	RigidBodyManager::AddBody(b4);
+	//RigidBodyManager::GetBodies().at(1)->AddImpulse({ 1000.f,0.f });
 
 }
 
@@ -70,14 +81,18 @@ void Application::Update()
 	{
 		m_timeAccumulator -= m_physicsTimeStep;
 		t += m_physicsTimeStep;
+		sf::Vector2f vecDir{0.f,0.f};
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-			RigidBodyManager::GetBodies().at(0)->Move({ 0.f,5.f * t });
+			vecDir += {0.f, 1.f};
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-			RigidBodyManager::GetBodies().at(0)->Move({ 0.f,-5.f * t });
+			vecDir += {0.f, -1.f};
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-			RigidBodyManager::GetBodies().at(0)->Move({ -5.f * t,0.f });
+			vecDir += {-1.f, 0.f};
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-			RigidBodyManager::GetBodies().at(0)->Move({ 5.f * t,0.f });
+			vecDir += {1.f, 0.f};
+
+		RigidBodyManager::GetBodies().at(0)->AddImpulse(vecDir * 5.5f);
+
 		RigidBodyManager::Update(m_physicsTimeStep);
 	}
 
