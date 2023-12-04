@@ -280,8 +280,13 @@ int DynamicTree::AllocateNewLeaf(RigidBody* obj)
 {
 	Node node;
 	AABB aabb = obj->GetAABB();
-	sf::Vector2f FatAABB(FAT_FACTOR, FAT_FACTOR);
-	node.box = aabb;
+	sf::Vector2f fatVector(FAT_FACTOR, FAT_FACTOR);
+
+	AABB FatAABB;
+	FatAABB.lowerBound = aabb.lowerBound -= fatVector;
+	FatAABB.upperBound = aabb.upperBound += fatVector;
+
+	node.box = FatAABB;
 	node.ownIndex = m_nodeCount;
 	node.isLeaf = true;
 	node.object = obj;

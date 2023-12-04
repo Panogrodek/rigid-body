@@ -25,4 +25,5 @@ protected:
 private:
 	static int m_count;
 	static std::unordered_map<int,RigidBody*> m_bodies;
+	static std::vector<sf::RectangleShape> m_points;
 };

@@ -14,7 +14,7 @@ public:
 
 	void Run();
 private:
-
+	void AddBody();
 	void Init();
 	void InitWindow();
 
@@ -27,4 +27,6 @@ private:
 	sf::Clock m_dt;
 	float m_timeAccumulator = 0.f;
 	float m_physicsTimeStep = 0.01f;
+
+	bool m_mouseHold = true;
 };

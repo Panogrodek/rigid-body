@@ -48,8 +48,10 @@ void RigidBodyManager::Destroy()
 
 void RigidBodyManager::Update(float t)
 {
-	for (auto& body : m_bodies)
+	for (auto& body : m_bodies) {
 		body.second->Step(t);
+		std::cout << body.second->GetVelocity().y << "\n";
+	}
 
 	Collision::Update();
 

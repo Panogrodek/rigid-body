@@ -23,9 +23,10 @@ struct RigidBodyData {
 	float Mass;
 	float Restitution;
 	float InvMass;
+	float Inertia;
+	float InvInertia;
 protected:
 	friend class RigidBody;
-	float Area;
 };
 
 class RigidBody {
@@ -48,9 +49,12 @@ public:
 	sf::Vector2f GetPosition();
 	sf::Vector2f GetVelocity();
 
+	sf::Color color = sf::Color::White;
 protected:
 	std::vector<sf::Vector2f> GetTransformedVertices();
 	AABB GetAABB();
+
+	void CalculateRotationalInertia();
 protected:
 	sf::Vector2f m_position;
 	sf::Vector2f m_linearVelocity;
@@ -82,6 +86,7 @@ private:
 	void CreateBoxTriangles();
 private:
 	friend class Collision;
+	friend class CollisionManifold;
 	friend class SATCollision;
 	friend class RigidBodyManager;
 	friend class DynamicTree;

@@ -11,7 +11,6 @@ RigidBody::RigidBody(sf::Vector2f pos, RigidBodyData data,
 	m_rotationalVelocity = 0.f;
 	
 	m_data = data;
-	m_data.InvMass = m_data.Mass == 0.f ? 0.f : 1.f / m_data.Mass;
 
 	m_force = sf::Vector2f{ 0.f,0.f };
 
@@ -20,6 +19,11 @@ RigidBody::RigidBody(sf::Vector2f pos, RigidBodyData data,
 	m_width = width;
 	m_height = height;
 	m_shape = type;
+
+	CalculateRotationalInertia();
+	m_data.InvMass = m_data.Mass == 0.f ? 0.f : 1.f / m_data.Mass;
+	m_data.InvInertia = m_data.Inertia == 0.f ? 0.f : 1.f / m_data.Inertia;
+
 
 	if (type == BODY_SHAPE::Box) {
 		CreateBoxVertices();
@@ -42,9 +46,10 @@ void RigidBody::Step(float t)
 	}
 
 	m_linearVelocity += m_force/m_data.Mass * t;
+	m_linearVelocity.y -= 9.81f * t;
 	m_position += m_linearVelocity * t;
 
-	m_rotation += m_rotationalVelocity * t;
+	m_rotation += (m_rotationalVelocity * t) * 180.f/PI;
 
 	Collision::m_bodiesToUpdate.insert(this);
 
@@ -65,7 +70,8 @@ void RigidBody::Render(sf::RenderWindow& window)
 		body.setSize(sf::Vector2f(2.f * m_radius, 2.f * m_radius));
 		body.setOrigin(body.getSize() / 2.f);
 		body.setPosition(m_position);
-
+		body.setFillColor(color);
+		body.setOutlineThickness(1.f);
 		if (texture.getSize().x == 0.f)
 			texture.loadFromFile("res/circle.png");
 		body.setTexture(&texture);
@@ -76,7 +82,7 @@ void RigidBody::Render(sf::RenderWindow& window)
 		std::vector<sf::Vertex> m_vertexes;
 		std::vector<sf::Vector2f> m_vertices = GetTransformedVertices();
 		for (auto& v : m_triangles)
-			m_vertexes.push_back(sf::Vertex(m_vertices[v]));
+			m_vertexes.push_back(sf::Vertex(m_vertices[v],color));
 
 		window.draw(m_vertexes.data(), m_vertexes.size(), sf::PrimitiveType::Triangles);
 		break;
@@ -247,3 +253,17 @@ float AABB::GetArea()
 	return 2.0f * d.x * d.y;
 }
 
+void RigidBody::CalculateRotationalInertia()
+{
+	switch (m_shape)
+	{
+	case BODY_SHAPE::Circle:
+		m_data.Inertia = (1.f / 2.f) * m_data.Mass * m_radius * m_radius;
+		break;
+	case BODY_SHAPE::Box:
+		m_data.Inertia = (1.f / 12.f) * m_data.Mass * (m_width * m_width + m_height * m_height);
+		break;
+	default:
+		break;
+	}
+}

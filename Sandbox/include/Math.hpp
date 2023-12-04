@@ -2,13 +2,13 @@
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Graphics/ConvexShape.hpp"
 
-sf::Vector2f subtract(sf::Vector2f a, sf::Vector2f b) { a.x -= b.x; a.y -= b.y; return a; }
-sf::Vector2f negate(sf::Vector2f v) { v.x = -v.x; v.y = -v.y; return v; }
-sf::Vector2f perpendicular(sf::Vector2f v) { sf::Vector2f p = { v.y, -v.x }; return p; }
-float dotProduct(sf::Vector2f a, sf::Vector2f b) { return a.x * b.x + a.y * b.y; }
-float lengthSquared(sf::Vector2f v) { return v.x * v.x + v.y * v.y; }
+inline sf::Vector2f subtract(sf::Vector2f a, sf::Vector2f b) { a.x -= b.x; a.y -= b.y; return a; }
+inline sf::Vector2f negate(sf::Vector2f v) { v.x = -v.x; v.y = -v.y; return v; }
+inline sf::Vector2f perpendicular(sf::Vector2f v) { sf::Vector2f p = { v.y, -v.x }; return p; }
+inline float dotProduct(sf::Vector2f a, sf::Vector2f b) { return a.x * b.x + a.y * b.y; }
+inline float lengthSquared(sf::Vector2f v) { return v.x * v.x + v.y * v.y; }
 
-sf::Vector2f tripleProduct(sf::Vector2f a, sf::Vector2f b, sf::Vector2f c) {
+inline sf::Vector2f tripleProduct(sf::Vector2f a, sf::Vector2f b, sf::Vector2f c) {
 
     sf::Vector2f r;
 
@@ -21,7 +21,7 @@ sf::Vector2f tripleProduct(sf::Vector2f a, sf::Vector2f b, sf::Vector2f c) {
     return r;
 }
 
-sf::Vector2f averagePoint(const sf::Vector2f* vertices, size_t count) {
+inline sf::Vector2f averagePoint(const sf::Vector2f* vertices, size_t count) {
     sf::Vector2f  avg = { 0.f, 0.f };
     for (size_t i = 0; i < count; i++) {
         avg.x += vertices[i].x;
@@ -30,4 +30,40 @@ sf::Vector2f averagePoint(const sf::Vector2f* vertices, size_t count) {
     avg.x /= count;
     avg.y /= count;
     return avg;
+}
+
+inline float PointLineDistance(sf::Vector2f a, sf::Vector2f b, sf::Vector2f p, sf::Vector2f& out) {
+    sf::Vector2f ab = b - a;
+    sf::Vector2f ap = p - a;
+
+    float proj = dotProduct(ap, ab);
+    float lengthSquared = ab.x * ab.x + ab.y * ab.y;
+    float d = proj / lengthSquared;
+
+    if (d <= 0)
+        out = a;
+    else if (d >= 1)
+        out = b;
+    else
+        out = a + ab * d;
+
+    sf::Vector2f pOut = out - p;
+
+    return sqrt(pOut.x * pOut.x + pOut.y * pOut.y);
+}
+
+inline bool NearlyEqual(float a, float b){
+    float result = abs(b) - abs(a);
+
+    if (abs(result) < 0.0005)
+        return true;
+    return false;
+}
+
+inline bool NearlyEqual(sf::Vector2f a, sf::Vector2f b) {
+    return NearlyEqual(a.x, b.x) && NearlyEqual(a.y, b.y);
+}
+
+inline float Cross(sf::Vector2f a, sf::Vector2f b) {
+    return a.x * b.y - a.y * b.x;
 }

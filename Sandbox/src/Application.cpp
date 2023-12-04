@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Application.hpp"
+#include "Random.hpp"
 /*
 Here we create window, and do all of the technical stuff of the Application
 */
@@ -21,16 +22,16 @@ Application::Application()
 	sf::Vector2f pos = { 10.f,10.f };
 	sf::Vector2f pos2 = { -20.f,0.f };
 
-	RigidBody* b = new RigidBody(pos ,d1,false,0.f,10.f, 10.f, BODY_SHAPE::Box);
-	RigidBody* b2 = new RigidBody(pos + pos2*2.f,d1,true,10.f,10.f,10.f,BODY_SHAPE::Box);
-	RigidBody* b3 = new RigidBody(pos - pos2,d1,false,10.f,10.f,10.f,BODY_SHAPE::Box);
-	RigidBody* b4 = new RigidBody({0.f,-25.f}, d2, true, 10.f, 100.f, 10.f, BODY_SHAPE::Box);
+	//RigidBody* b = new RigidBody(pos ,d1,false,0.f,10.f, 10.f, BODY_SHAPE::Box);
+	//RigidBody* b2 = new RigidBody(pos + pos2*2.f,d1,true,10.f,10.f,10.f,BODY_SHAPE::Box);
+	//RigidBody* b3 = new RigidBody(pos - pos2,d1,false,10.f,10.f,10.f,BODY_SHAPE::Box);
+	RigidBody* b4 = new RigidBody({0.f,-25.f}, d2, true, 10.f, 80.f, 10.f, BODY_SHAPE::Box);
 	//b->Rotate(45.f);
-	b4->Rotate(22.5f);
-	RigidBodyManager::AddBody(b);
-	RigidBodyManager::AddBody(b2);
-	RigidBodyManager::AddBody(b3);
+	//b4->Rotate(12.25f);
+	//RigidBodyManager::AddBody(b);
+	//RigidBodyManager::AddBody(b2);
 	RigidBodyManager::AddBody(b4);
+	//RigidBodyManager::AddBody(b3);
 	//RigidBodyManager::GetBodies().at(1)->AddImpulse({ 1000.f,0.f });
 
 }
@@ -48,6 +49,19 @@ void Application::Run()
 		Render();
 		/*	}*/
 	}
+}
+
+void Application::AddBody()
+{
+	RigidBodyData d1;
+	d1.Density = 0.7f;
+	d1.Mass = 1.f;
+	d1.Restitution = 1.20f;
+
+	sf::Vector2f Pos = m_window.mapPixelToCoords(sf::Mouse::getPosition(m_window));
+	RigidBody* b4 = new RigidBody(Pos, d1, false, 10.f, Rand(3.f,9.f), Rand(3.f, 9.f), BODY_SHAPE::Box);
+	b4->color = sf::Color(int(Rand(0.f,255.f)), int(Rand(0.f, 255.f)), int(Rand(0.f, 255.f)),255);
+	RigidBodyManager::AddBody(b4);
 }
 
 void Application::Init()
@@ -79,6 +93,13 @@ void Application::Update()
 
 	while (m_timeAccumulator >= m_physicsTimeStep)
 	{
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && !m_mouseHold) {
+			m_mouseHold = true;
+			AddBody();
+		}
+		else if (!sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			m_mouseHold = false;
+
 		m_timeAccumulator -= m_physicsTimeStep;
 		t += m_physicsTimeStep;
 		sf::Vector2f vecDir{0.f,0.f};
@@ -91,11 +112,10 @@ void Application::Update()
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 			vecDir += {1.f, 0.f};
 
-		RigidBodyManager::GetBodies().at(0)->AddImpulse(vecDir * 5.5f);
+		//RigidBodyManager::GetBodies().at(1)->Move(vecDir * 0.5f);
 
 		RigidBodyManager::Update(m_physicsTimeStep);
 	}
-
 }
 
 void Application::Render()
