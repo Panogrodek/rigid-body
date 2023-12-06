@@ -43,7 +43,7 @@ void Collision::Update()
 	}
 
 	for (auto& c : m_collidingBodies) {
-		ResolveCollisionWithRotation(c);
+		ResolveCollisionWithFriction(c);
 		if (c.count > 0) {
 			sf::RectangleShape s{ {1.f,1.f}};
 			s.setFillColor(sf::Color::Red);
@@ -66,9 +66,9 @@ void Collision::Update()
 
 void Collision::Render(sf::RenderWindow& window)
 {
-	m_Tree.Render(window);
-	for (auto& p : m_points)
-		window.draw(p);
+	//m_Tree.Render(window);
+	//for (auto& p : m_points)
+	//	window.draw(p);
 }
 
 void Collision::AddBody(RigidBody* body)
@@ -88,8 +88,10 @@ bool Collision::CheckCollision(RigidBody* b1, RigidBody* b2, sf::Vector2f& mtv)
 	bool good = SATCollision::Instance.SatCollision(*b1, *b2, mtv);
 	if (good) {
 		b1->Move(mtv);
-		if (!b2->m_isStatic)
-			b2->Move(-mtv);
+		if (!b2->m_isStatic) {
+			b1->Move(-mtv / 2.f);
+			b2->Move(-mtv/2.f);
+		}
 	}
 
 	return good;
@@ -103,6 +105,9 @@ void Collision::ResolveCollision(CollisionManifold& manifold)
 	sf::Vector2f normal = SATCollision::Instance.Normalize(mtv);
 	sf::Vector2f relativeVelocity = b2->m_linearVelocity - b1->m_linearVelocity;
 
+	if (dotProduct(-relativeVelocity, normal) > 0.f)
+		return;
+
 	float e = std::min(b1->m_data.Restitution, b2->m_data.Restitution);
 	
 	float j = -(1.f + e) * SATCollision::Instance.DotProduct(relativeVelocity, normal);
@@ -115,9 +120,9 @@ void Collision::ResolveCollision(CollisionManifold& manifold)
 		b2->m_linearVelocity += impulse * b2->m_data.InvMass;
 }
 
-void Collision::ResolveCollisionWithRotation(CollisionManifold& c)
+void Collision::ResolveCollisionWithRotation(CollisionManifold& c, float* jList, int jListCount)
 {
-	sf::Vector2f normal = SATCollision::Instance.Normalize(c.mtv);
+	sf::Vector2f normal = SATCollision::Instance.Normalize(-c.mtv/2.f);
 	float e = std::min(c.A->m_data.Restitution, c.B->m_data.Restitution);
 
 	sf::Vector2f contactList[2]{c.cp1,c.cp2};
@@ -145,7 +150,7 @@ void Collision::ResolveCollisionWithRotation(CollisionManifold& c)
 
 		float contactVelocityMag = dotProduct(relativeVelocity, normal);
 
-		if (contactVelocityMag > 0.f)
+		if (contactVelocityMag > 0.f && !c.B->m_isStatic)
 		{
 			continue;
 		}
@@ -161,6 +166,9 @@ void Collision::ResolveCollisionWithRotation(CollisionManifold& c)
 		j /= denom;
 		j /= (float)c.count;
 
+		if (i < jListCount)
+			jList[i] = j;
+
 		sf::Vector2f impulse = j * normal;
 		impulseList[i] = impulse;
 	}
@@ -169,8 +177,82 @@ void Collision::ResolveCollisionWithRotation(CollisionManifold& c)
 	{
 		c.A->m_linearVelocity += -impulseList[i] * c.A->m_data.InvMass;
 		c.A->m_rotationalVelocity += -Cross(raList[i], impulseList[i]) * c.A->m_data.InvInertia;
-		c.B->m_linearVelocity += impulseList[i] * c.B->m_data.InvMass;
-		c.B->m_rotationalVelocity += Cross(rbList[i], impulseList[i]) * c.B->m_data.InvInertia;
+		if (!c.B->m_isStatic) {
+			c.B->m_linearVelocity += impulseList[i] * c.B->m_data.InvMass;
+			c.B->m_rotationalVelocity += Cross(rbList[i], impulseList[i]) * c.B->m_data.InvInertia;
+		}
+	}
+}
+
+void Collision::ResolveCollisionWithFriction(CollisionManifold& c)
+{
+	sf::Vector2f normal = SATCollision::Instance.Normalize(-c.mtv / 2.f);
+	float e = std::min(c.A->m_data.Restitution, c.B->m_data.Restitution);
+
+	sf::Vector2f contactList[2]{ c.cp1,c.cp2 };
+	sf::Vector2f raList[2]{};
+	sf::Vector2f rbList[2]{};
+	sf::Vector2f impulseList[2]{};
+	float jList[2]{};
+
+	ResolveCollisionWithRotation(c, jList,2);
+
+	for (int i = 0; i < c.count; i++)
+	{
+		sf::Vector2f ra = contactList[i] - c.A->m_position;
+		sf::Vector2f rb = contactList[i] - c.B->m_position;
+
+		raList[i] = ra;
+		rbList[i] = rb;
+
+		sf::Vector2f  raPerp(-ra.y, ra.x);
+		sf::Vector2f  rbPerp(-rb.y, rb.x);
+
+		sf::Vector2f angularLinearVelocityA = raPerp * c.A->m_rotationalVelocity;
+		sf::Vector2f angularLinearVelocityB = rbPerp * c.B->m_rotationalVelocity;
+
+		sf::Vector2f relativeVelocity =
+			(c.B->GetVelocity() + angularLinearVelocityB) -
+			(c.A->GetVelocity() + angularLinearVelocityA);
+
+		sf::Vector2f tangent = relativeVelocity - dotProduct(relativeVelocity, normal) * normal;
+
+		if (NearlyEqual(tangent, sf::Vector2f({ 0.f,0.f }))) //prop static body
+			continue;
+
+		tangent = SATCollision::Instance.Normalize(tangent);
+
+		float raPerpDotT = dotProduct(raPerp, tangent);
+		float rbPerpDotT = dotProduct(rbPerp, tangent);
+
+		float denom = c.A->m_data.InvMass + c.B->m_data.InvMass +
+			(raPerpDotT * raPerpDotT) * c.A->m_data.InvInertia +
+			(rbPerpDotT * rbPerpDotT) * c.B->m_data.InvInertia;
+
+		float contactVelocityMag = dotProduct(relativeVelocity, tangent);
+
+		float jt = -contactVelocityMag;
+		jt /= denom;
+		jt /= (float)c.count;
+
+		sf::Vector2f frictionImpulse{};
+		if (abs(jt) <= jList[i] * 0.5f) //static friction
+			frictionImpulse = jt * tangent;
+		else
+			frictionImpulse = -jList[i] * tangent * 0.5f; //dynamic friction
+
+
+		impulseList[i] = frictionImpulse;
+	}
+
+	for (int i = 0; i < c.count; i++)
+	{
+		c.A->m_linearVelocity += -impulseList[i] * c.A->m_data.InvMass;
+		c.A->m_rotationalVelocity += -Cross(raList[i], impulseList[i]) * c.A->m_data.InvInertia;
+		if (!c.B->m_isStatic) {
+			c.B->m_linearVelocity += impulseList[i] * c.B->m_data.InvMass;
+			c.B->m_rotationalVelocity += Cross(rbList[i], impulseList[i]) * c.B->m_data.InvInertia;
+		}
 	}
 }
 
@@ -181,75 +263,4 @@ bool Collision::DoesCollisionExist(RigidBody* b1, RigidBody* b2)
 			return true;
 	}
 	return false;
-}
-
-void CollisionManifold::FindContactPoints()
-{
-	if (A->m_shape == BODY_SHAPE::Box) {
-		if (B->m_shape == BODY_SHAPE::Box)
-			FindContactPoint(A->GetTransformedVertices(), B->GetTransformedVertices());
-	}
-}
-
-void CollisionManifold::FindContactPoint(std::vector<sf::Vector2f> va, std::vector<sf::Vector2f> vb)
-{
-	float minDistSq = INFINITY;
-
-	for (auto& p : va)
-	{
-		for (int j = 0; j < vb.size(); j++)
-		{
-			sf::Vector2f la = vb[j];
-			sf::Vector2f lb = vb[(j + 1) % vb.size()];
-
-			sf::Vector2f cp{};
-
-			float distSq = PointLineDistance(la, lb, p, cp);
-
-			if (NearlyEqual(distSq, minDistSq))
-			{
-				if (!NearlyEqual(cp, cp1) &&
-					!NearlyEqual(cp, cp2))
-				{
-					cp2 = cp;
-					count = 2;
-				}
-			}
-			else if (distSq < minDistSq)
-			{
-				minDistSq = distSq;
-				count = 1;
-				cp1 = cp;
-			}
-		}
-	}
-
-	for (auto& p : vb)
-	{
-		for (int j = 0; j < va.size(); j++)
-		{
-			sf::Vector2f la = va[j];
-			sf::Vector2f lb = va[(j + 1) % vb.size()];
-
-			sf::Vector2f cp{};
-
-			float distSq = PointLineDistance(la, lb, p, cp);
-
-			if (NearlyEqual(distSq, minDistSq))
-			{
-				if (!NearlyEqual(cp, cp1) &&
-					!NearlyEqual(cp, cp2))
-				{
-					cp2 = cp;
-					count = 2;
-				}
-			}
-			else if (distSq < minDistSq)
-			{
-				minDistSq = distSq;
-				count = 1;
-				cp1 = cp;
-			}
-		}
-	}
 }

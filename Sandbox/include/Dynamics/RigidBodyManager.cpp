@@ -50,7 +50,8 @@ void RigidBodyManager::Update(float t)
 {
 	for (auto& body : m_bodies) {
 		body.second->Step(t);
-		std::cout << body.second->GetVelocity().y << "\n";
+		//if(abs(body.second->GetVelocity().y) > 1.f)
+		//	std::cout << body.second->GetVelocity().y << "\n";
 	}
 
 	Collision::Update();

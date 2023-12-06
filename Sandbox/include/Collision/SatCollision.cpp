@@ -18,11 +18,11 @@ bool SATCollision::SatCollision(RigidBody& body, RigidBody& other, sf::Vector2f&
 	uint32_t all = bodyCount + otherCount;
 
 	if (all == 2)
-		return CircleCollision(body, other, MTV);
+		return CircleCircleCollision(body, other, MTV);
 	else if (bodyCount == 1)
-		return CircleCollision(body, other, MTV);
+		return CirclePolygonCollision(body, other, MTV,true);
 	else if (otherCount == 1)
-		return CircleCollision(body, other, MTV);
+		return CirclePolygonCollision(other, body, MTV,false);
 
 	sf::Vector2f* axis = new sf::Vector2f[all];
 
@@ -63,84 +63,76 @@ bool SATCollision::SatCollision(RigidBody& body, RigidBody& other, sf::Vector2f&
 	return true;
 }
 
-bool SATCollision::CircleCollision(const RigidBody& body, const RigidBody& other, sf::Vector2f& MTV)
+bool SATCollision::CircleCircleCollision(RigidBody& body, RigidBody& other, sf::Vector2f& MTV)
 {
-	return false;
+	sf::Vector2f diff(body.m_position - other.m_position);
+
+	float length = Length(diff);
+	float sum = body.m_radius + other.m_radius;
+
+	if (length >= sum)
+		return false;
+
+	sum -= length;
+
+	diff = Normalize(diff);
+
+	MTV = diff * sum;
+
+	return true;
 }
 
-//bool SATCollision::SatCollision(const CircleCollider& body, const RectangleCollider& other, sf::Vector2f& MTV) {
-//	//float minOverlap = INF;
-//
-//	//sf::Vector2f center = body.GetPosition();
-//	//float		 radius = body.GetRadius();
-//
-//	//sf::Vector2f* vert = other.m_vertices;
-//
-//	//uint32_t vertCount = other.m_verticesCount;
-//	//uint32_t all = vertCount + 1;
-//
-//	//sf::Vector2f* axis = new sf::Vector2f[all];
-//
-//	//for (uint32_t i = 0; i < vertCount; i++)
-//	//	axis[i] = PerpendicularAxis(vert, i, vertCount);
-//
-//	//axis[vertCount] = CircleAxis(vert, vertCount, center);
-//
-//	//for (uint32_t i = 0; i < all; i++) {
-//	//	auto& a = axis[i];
-//
-//	//	sf::Vector2f circleProjection = ProjectCircle(center, radius, a);
-//	//	sf::Vector2f otherProjection = ProjectOnto(vert, vertCount, a);
-//
-//	//	float overlap = Overlap(circleProjection, otherProjection);
-//
-//	//	if (!overlap) {
-//	//		MTV = sf::Vector2f(0.0f, 0.0f);
-//
-//	//		delete[] axis;
-//
-//	//		return false;
-//	//	}
-//	//	else {
-//	//		if (overlap < minOverlap) {
-//	//			minOverlap = overlap;
-//
-//	//			MTV = a * overlap;
-//	//		}
-//	//	}
-//	//}
-//
-//	//if (DotProduct(center - GetCenter(other), MTV) < 0.0f)
-//	//	MTV *= -1.0f;
-//
-//	//delete[] axis;
-//	return true;
-//}
+bool SATCollision::CirclePolygonCollision(RigidBody& body, RigidBody& other, sf::Vector2f& MTV, bool CircleFirst) {
+	float minOverlap = INF;
 
-//bool SATCollision::SatCollision(const RectangleCollider& body, const CircleCollider& other, sf::Vector2f& MTV) {
-//	bool temp = SatCollision(other, body, MTV);
-//	MTV *= -1.0f;
-//
-//	return temp;
-//}
+	sf::Vector2f center = body.m_position;
+	float		 radius = body.m_radius;
 
-//bool SATCollision::SatCollision(const CircleCollider& body, const CircleCollider& other, sf::Vector2f& MTV) {
-//	//sf::Vector2f diff(body.GetPosition() - other.GetPosition());
-//
-//	//float length = Length(diff);
-//	//float sum = body.GetRadius() + other.GetRadius();
-//
-//	//if (length >= sum)
-//	//	return false;
-//
-//	//sum -= length;
-//
-//	//diff = Normalize(diff);
-//
-//	//MTV = diff * sum;
-//
-//	return true;
-//}
+	std::vector<sf::Vector2f> vert = other.GetTransformedVertices();
+
+	uint32_t vertCount = vert.size();
+	uint32_t all = vertCount + 1;
+
+	sf::Vector2f* axis = new sf::Vector2f[all];
+
+	for (uint32_t i = 0; i < vertCount; i++)
+		axis[i] = PerpendicularAxis(vert, i);
+
+	axis[vertCount] = CircleAxis(vert, center);
+
+	for (uint32_t i = 0; i < all; i++) {
+		auto& a = axis[i];
+
+		sf::Vector2f circleProjection = ProjectCircle(center, radius, a);
+		sf::Vector2f otherProjection = ProjectOnto(vert, a);
+
+		float overlap = Overlap(circleProjection, otherProjection);
+
+		if (!overlap) {
+			MTV = sf::Vector2f(0.0f, 0.0f);
+
+			delete[] axis;
+
+			return false;
+		}
+		else {
+			if (overlap < minOverlap) {
+				minOverlap = overlap;
+
+				MTV = a * overlap;
+			}
+		}
+	}
+
+	if (DotProduct(center - GetCenter(other), MTV) < 0.0f)
+		MTV *= -1.0f;
+
+	if (!CircleFirst)
+		MTV *= -1.0f;
+
+	delete[] axis;
+	return true;
+}
 
 sf::Vector2f SATCollision::GetCenter(const RigidBody& body) const {
 	sf::Vector2f center;
@@ -175,13 +167,13 @@ SATCollision::~SATCollision()
 {
 }
 
-sf::Vector2f SATCollision::CircleAxis(sf::Vector2f* vertices, uint32_t count, sf::Vector2f center) {
+sf::Vector2f SATCollision::CircleAxis(std::vector<sf::Vector2f> vertices, sf::Vector2f center) {
 	sf::Vector2f axis;
 
 	uint32_t index = 0;
 	float	 dist = INF;
 
-	for (uint32_t i = 0; i < count; i++) {
+	for (uint32_t i = 0; i < vertices.size(); i++) {
 		auto& v = vertices[i];
 
 		float d = Distance(v, center);

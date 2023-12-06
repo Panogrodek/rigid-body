@@ -48,6 +48,7 @@
     <ClInclude Include="pch\stdafx.h">
       <Filter>pch</Filter>
     </ClInclude>
+    <ClInclude Include="include\Collision\CollisionManifold.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\Collision\Collision.cpp">
@@ -75,6 +76,7 @@
     <ClCompile Include="src\GJK.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="include\Collision\CollisionManifold.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="openal32.dll" />

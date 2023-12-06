@@ -8,3 +8,7 @@ template<typename T>
 static T Rand(T min, T max) {
 	return std::uniform_real_distribution<T>(min, max)(m_randEngine);
 }
+
+static int Rand(int min, int max) {
+	return std::uniform_int_distribution<int>(min, max)(m_randEngine);
+}

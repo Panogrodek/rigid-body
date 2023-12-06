@@ -20,10 +20,16 @@ RigidBody::RigidBody(sf::Vector2f pos, RigidBodyData data,
 	m_height = height;
 	m_shape = type;
 
-	CalculateRotationalInertia();
+	if (!m_isStatic) {
+		CalculateRotationalInertia();
+	}
+	else {
+		m_data.Mass = 0.f;
+		m_data.Inertia = 0.f;
+	}
+
 	m_data.InvMass = m_data.Mass == 0.f ? 0.f : 1.f / m_data.Mass;
 	m_data.InvInertia = m_data.Inertia == 0.f ? 0.f : 1.f / m_data.Inertia;
-
 
 	if (type == BODY_SHAPE::Box) {
 		CreateBoxVertices();
@@ -31,6 +37,42 @@ RigidBody::RigidBody(sf::Vector2f pos, RigidBodyData data,
 
 		m_transformedVertices = m_vertices;
 	}
+	else if (type == BODY_SHAPE::Circle) {
+		CreateCircleBody(m_position, m_radius, m_isStatic);
+	}
+
+	m_transformRequired = true;
+	m_aabbUpdateRequired = true;
+
+	GetTransformedVertices();
+}
+
+void RigidBody::CreateBoxBody(sf::Vector2f pos, float width, float height, bool isStatic) {
+	m_shape = BODY_SHAPE::Box;
+	m_width = width;
+	m_height = height;
+	m_position = pos;
+	m_isStatic = isStatic;
+	CreateBoxVertices();
+	CreateBoxTriangles();
+
+	m_transformedVertices = m_vertices;
+
+	m_transformRequired = true;
+	m_aabbUpdateRequired = true;
+
+	GetTransformedVertices();
+}
+
+void RigidBody::CreateCircleBody(sf::Vector2f pos, float radius, bool isStatic) {
+	m_shape = BODY_SHAPE::Circle;
+	m_radius = radius;
+	m_isStatic = isStatic;
+	m_position = pos;
+
+	m_vertices.push_back({0.f,0.f});
+
+	m_transformedVertices = m_vertices;
 
 	m_transformRequired = true;
 	m_aabbUpdateRequired = true;
@@ -46,7 +88,7 @@ void RigidBody::Step(float t)
 	}
 
 	m_linearVelocity += m_force/m_data.Mass * t;
-	m_linearVelocity.y -= 9.81f * t;
+	//m_linearVelocity.y -= 9.81f * t;
 	m_position += m_linearVelocity * t;
 
 	m_rotation += (m_rotationalVelocity * t) * 180.f/PI;
@@ -71,7 +113,6 @@ void RigidBody::Render(sf::RenderWindow& window)
 		body.setOrigin(body.getSize() / 2.f);
 		body.setPosition(m_position);
 		body.setFillColor(color);
-		body.setOutlineThickness(1.f);
 		if (texture.getSize().x == 0.f)
 			texture.loadFromFile("res/circle.png");
 		body.setTexture(&texture);

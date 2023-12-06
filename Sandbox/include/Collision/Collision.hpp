@@ -1,25 +1,10 @@
 #pragma once
 #include "Dynamics/RigidBody.hpp"
 #include "Collision/DynamicTree.hpp"
+#include "Collision/CollisionManifold.hpp"
 
 #include <unordered_map>
 #include <unordered_set>
-
-struct CollisionManifold {
-	RigidBody* A;
-	RigidBody* B;
-
-	sf::Vector2f mtv = {};
-
-	sf::Vector2f cp1 = {};
-	sf::Vector2f cp2 = {};
-
-	uint16_t count = 0;
-
-	void FindContactPoints();
-private:
-	void FindContactPoint(std::vector<sf::Vector2f> va, std::vector<sf::Vector2f> vb);
-};
 
 class Collision {
 public:
@@ -33,7 +18,8 @@ public:
 private:
 	static bool CheckCollision(RigidBody* b1, RigidBody* b2, sf::Vector2f& mtv);
 	static void ResolveCollision(CollisionManifold& manifold);
-	static void ResolveCollisionWithRotation(CollisionManifold& c);
+	static void ResolveCollisionWithRotation(CollisionManifold& c, float jList[] = nullptr, int jListCount = 0);
+	static void ResolveCollisionWithFriction(CollisionManifold& c);
 	static bool DoesCollisionExist(RigidBody* b1, RigidBody* b2);
 private:
 	friend class RigidBody;

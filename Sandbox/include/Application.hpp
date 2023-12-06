@@ -26,7 +26,7 @@ private:
 
 	sf::Clock m_dt;
 	float m_timeAccumulator = 0.f;
-	float m_physicsTimeStep = 0.01f;
+	float m_physicsTimeStep = 0.005f;
 
 	bool m_mouseHold = true;
 };

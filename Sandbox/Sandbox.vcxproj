@@ -100,6 +100,7 @@
   <ItemGroup>
     <ClInclude Include="include\Application.hpp" />
     <ClInclude Include="include\Collision\Collision.hpp" />
+    <ClInclude Include="include\Collision\CollisionManifold.hpp" />
     <ClInclude Include="include\Collision\DynamicTree.hpp" />
     <ClInclude Include="include\Collision\SatCollision.hpp" />
     <ClInclude Include="include\Dynamics\RigidBody.hpp" />
@@ -111,6 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\Collision\Collision.cpp" />
+    <ClCompile Include="include\Collision\CollisionManifold.cpp" />
     <ClCompile Include="include\Collision\DynamicTree.cpp" />
     <ClCompile Include="include\Collision\SatCollision.cpp" />
     <ClCompile Include="include\Dynamics\RigidBody.cpp" />

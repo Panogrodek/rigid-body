@@ -25,6 +25,7 @@ struct RigidBodyData {
 	float InvMass;
 	float Inertia;
 	float InvInertia;
+	float Friction;
 protected:
 	friend class RigidBody;
 };
@@ -48,6 +49,9 @@ public:
 
 	sf::Vector2f GetPosition();
 	sf::Vector2f GetVelocity();
+
+	void CreateBoxBody(sf::Vector2f pos, float width, float height, bool isStatic);
+	void CreateCircleBody(sf::Vector2f pos, float radius, bool isStatic);
 
 	sf::Color color = sf::Color::White;
 protected:

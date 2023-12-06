@@ -40,22 +40,22 @@ inline float PointLineDistance(sf::Vector2f a, sf::Vector2f b, sf::Vector2f p, s
     float lengthSquared = ab.x * ab.x + ab.y * ab.y;
     float d = proj / lengthSquared;
 
-    if (d <= 0)
+    if (d <= 0.f)
         out = a;
-    else if (d >= 1)
+    else if (d >= 1.f)
         out = b;
     else
         out = a + ab * d;
 
-    sf::Vector2f pOut = out - p;
+    sf::Vector2f pOut = p - out;
 
     return sqrt(pOut.x * pOut.x + pOut.y * pOut.y);
 }
 
 inline bool NearlyEqual(float a, float b){
-    float result = abs(b) - abs(a);
+    float result = b - a;
 
-    if (abs(result) < 0.0005)
+    if (abs(result) < 0.005)
         return true;
     return false;
 }
@@ -66,4 +66,8 @@ inline bool NearlyEqual(sf::Vector2f a, sf::Vector2f b) {
 
 inline float Cross(sf::Vector2f a, sf::Vector2f b) {
     return a.x * b.y - a.y * b.x;
+}
+
+inline sf::Vector2f Normalize(sf::Vector2f v) {
+    return v /= v.length();
 }

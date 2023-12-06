@@ -9,7 +9,8 @@ public:
 	static SATCollision Instance;
 
 	bool SatCollision(RigidBody& body, RigidBody& other, sf::Vector2f& MTV);
-	bool CircleCollision(const RigidBody& body, const RigidBody& other, sf::Vector2f& MTV);
+	bool CirclePolygonCollision(RigidBody& body, RigidBody& other, sf::Vector2f& MTV, bool CircleFirst);
+	bool CircleCircleCollision(RigidBody& body, RigidBody& other, sf::Vector2f& MTV);
 
 	//my eyes are burning
 	sf::Vector2f Normalize(sf::Vector2f v) const;
@@ -20,7 +21,7 @@ private:
 
 	sf::Vector2f GetCenter(const RigidBody& body) const;
 
-	sf::Vector2f CircleAxis(sf::Vector2f* vertices, uint32_t count, sf::Vector2f center);
+	sf::Vector2f CircleAxis(std::vector<sf::Vector2f> vertices, sf::Vector2f center);
 
 	sf::Vector2f PerpendicularAxis(std::vector<sf::Vector2f> vertices, uint32_t index) const;
 
