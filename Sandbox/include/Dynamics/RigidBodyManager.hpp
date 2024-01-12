@@ -1,6 +1,7 @@
 #pragma once
 #include "RigidBody.hpp"
 #include <unordered_map>
+#include <unordered_set>
 
 class RigidBodyManager {
 public:
@@ -21,9 +22,11 @@ public:
 protected:
 	friend class RigidBody;
 	friend class Collision;
-
 private:
+	static void RemoveBodies();
+	static void AddBodies();
 	static int m_count;
-	static std::unordered_map<int,RigidBody*> m_bodies;
-	static std::vector<sf::RectangleShape> m_points;
+	static std::unordered_map<int, RigidBody*> m_bodies;
+	static std::unordered_set<int> m_bodiesToRemove;
+	static std::unordered_set<RigidBody*> m_bodiesToAdd;
 };

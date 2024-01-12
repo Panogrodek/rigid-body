@@ -7,14 +7,13 @@
 std::unordered_set<RigidBody*> Collision::m_bodiesToUpdate;
 std::vector<CollisionManifold> Collision::m_collidingBodies;
 
-std::vector<sf::RectangleShape> Collision::m_points;
+std::vector<sf::RectangleShape> Collision::m_points; //only for drawing
 
 DynamicTree Collision::m_Tree;
 
 void Collision::Update()
 {
 	m_points.clear();
-
 
 	for (auto& b : m_bodiesToUpdate)
 		m_Tree.Update(b->m_nodeIndex);
@@ -30,7 +29,7 @@ void Collision::Update()
 
 		for (auto& b2 : collisions) {
 			sf::Vector2f mtv{};
-			if (!CheckCollision(b1, b2, mtv) || DoesCollisionExist(b1,b2))
+			if (!CheckCollision(b1, b2, mtv))
 				continue;
 			CollisionManifold manifold;
 			manifold.A = b1;
@@ -44,6 +43,9 @@ void Collision::Update()
 
 	for (auto& c : m_collidingBodies) {
 		ResolveCollisionWithFriction(c);
+		//ResolveCollisionWithRotation(c); //this is the other type of collision
+
+		//this is debug rendering
 		if (c.count > 0) {
 			sf::RectangleShape s{ {1.f,1.f}};
 			s.setFillColor(sf::Color::Red);
@@ -56,6 +58,16 @@ void Collision::Update()
 			}
 		}
 	}
+	//intersection user data
+	for (auto& c : m_collidingBodies) {
+		if (c.A->m_onIntersection != nullptr)
+			c.A->m_onIntersection(c.B);
+		if (c.A == nullptr || c.B == nullptr)
+			continue;
+		if (c.B->m_onIntersection != nullptr)
+			c.B->m_onIntersection(c.A);
+	}
+
 	m_collidingBodies.clear();
 
 	for (auto& b : m_bodiesToUpdate)
@@ -66,6 +78,7 @@ void Collision::Update()
 
 void Collision::Render(sf::RenderWindow& window)
 {
+	//debug draw stuff
 	//m_Tree.Render(window);
 	//for (auto& p : m_points)
 	//	window.draw(p);
@@ -73,7 +86,6 @@ void Collision::Render(sf::RenderWindow& window)
 
 void Collision::AddBody(RigidBody* body)
 {
-	body->GetTransformedVertices(); //FUCK ME
 	m_Tree.Insert(body);
 }
 
@@ -81,21 +93,62 @@ void Collision::RemoveBody(int index)
 {
 	//TODO: debug
 	m_Tree.RemoveLeafNode(RigidBodyManager::m_bodies[index]->m_nodeIndex);
+	auto& iter = m_bodiesToUpdate.find(RigidBodyManager::m_bodies[index]);
+
+	if (iter != m_bodiesToUpdate.end())
+		m_bodiesToUpdate.erase(iter);
+}
+
+void Collision::Validate(RigidBody* object)
+{
+	m_Tree.m_nodes[object->m_nodeIndex].object = object;
 }
 
 bool Collision::CheckCollision(RigidBody* b1, RigidBody* b2, sf::Vector2f& mtv)
 {
-	bool good = SATCollision::Instance.SatCollision(*b1, *b2, mtv);
+	bool good = SATCollision::Instance.SatCollision(*b1, *b2, mtv) && !DoesCollisionExist(b1, b2);
 	if (good) {
-		b1->Move(mtv);
-		if (!b2->m_isStatic) {
-			b1->Move(-mtv / 2.f);
-			b2->Move(-mtv/2.f);
+		if (b2->m_isStatic) {
+			b1->Move(mtv);
+			return good;
 		}
+		b1->Move(mtv / 2.f);
+		b2->Move(-mtv / 2.f);
 	}
 
 	return good;
 }
+
+/*
+DISCLAIMER:
+this part of the code is from FlatPhysics engine (a c# physics engine tutorial from twobitcoder101
+the collision resolution i.e. finding contact points and applying forces comes directly from:
+
+Finding contact point -> FlatManifold.cs (https://github.com/twobitcoder101/FlatPhysics-part-23/blob/main/FlatManifold.cs)
+Resolving collision with forces -> FlatWorld.cs (https://github.com/twobitcoder101/FlatPhysics-part-23/blob/main/FlatWorld.cs)
+
+MIT License
+
+Copyright (c) 2021 twobitcoder101
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 void Collision::ResolveCollision(CollisionManifold& manifold)
 {

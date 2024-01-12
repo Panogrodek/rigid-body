@@ -24,6 +24,8 @@ private:
 
 	sf::RenderWindow m_window;
 
+	RigidBody* m_bodyToMove;
+
 	sf::Clock m_dt;
 	float m_timeAccumulator = 0.f;
 	float m_physicsTimeStep = 0.005f;

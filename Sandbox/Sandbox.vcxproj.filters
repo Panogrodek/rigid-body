@@ -36,9 +36,6 @@
     <ClInclude Include="include\Dynamics\RigidBodyManager.hpp">
       <Filter>include\Dynamics</Filter>
     </ClInclude>
-    <ClInclude Include="include\GJK.hpp">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="include\Math.hpp">
       <Filter>include</Filter>
     </ClInclude>
@@ -49,6 +46,7 @@
       <Filter>pch</Filter>
     </ClInclude>
     <ClInclude Include="include\Collision\CollisionManifold.hpp" />
+    <ClInclude Include="include\Collision\AABB.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\Collision\Collision.cpp">
@@ -73,10 +71,8 @@
     <ClCompile Include="src\Application.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\GJK.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="include\Collision\CollisionManifold.cpp" />
+    <ClCompile Include="include\Collision\AABB.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="openal32.dll" />

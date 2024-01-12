@@ -1,61 +1,51 @@
 #include "stdafx.h"
 #include "RigidBody.hpp"
+#include "Math.hpp"
 #include "Collision/Collision.hpp"
 
-RigidBody::RigidBody(sf::Vector2f pos, RigidBodyData data,
-	bool isStatic, float radius, float width, float height, BODY_SHAPE type)
+RigidBody::RigidBody(sf::Vector2f pos, RigidBodyPhysicsData data,
+	float radius, float width, float height, bool isStatic, BODY_SHAPE shape) :
+	m_position(pos),
+	m_data(data),
+	m_radius(radius),
+	m_width(width),
+	m_height(height),
+	m_isStatic(isStatic),
+	m_shape(shape)
 {
-	m_position = pos;
-	m_linearVelocity = sf::Vector2f{ 0.f,0.f };
-	m_rotation = 0.f;
-	m_rotationalVelocity = 0.f;
-	
-	m_data = data;
+	CalculateMassAndInertia();
 
-	m_force = sf::Vector2f{ 0.f,0.f };
-
-	m_isStatic = isStatic;
-	m_radius = radius;
-	m_width = width;
-	m_height = height;
-	m_shape = type;
-
-	if (!m_isStatic) {
-		CalculateRotationalInertia();
-	}
-	else {
-		m_data.Mass = 0.f;
-		m_data.Inertia = 0.f;
-	}
-
-	m_data.InvMass = m_data.Mass == 0.f ? 0.f : 1.f / m_data.Mass;
-	m_data.InvInertia = m_data.Inertia == 0.f ? 0.f : 1.f / m_data.Inertia;
-
-	if (type == BODY_SHAPE::Box) {
+	if (m_shape == BODY_SHAPE::Box)
 		CreateBoxVertices();
-		CreateBoxTriangles();
+	else if (m_shape == BODY_SHAPE::Circle)
+		m_vertices.push_back({ 0.f,0.f });
 
-		m_transformedVertices = m_vertices;
+	if (m_shape == BODY_SHAPE::Circle) {
+		static sf::Texture texture;
+		if (texture.getSize().x == 0.f)
+			texture.loadFromFile("res/circle.png");
+		m_renderBody.setTexture(&texture);
 	}
-	else if (type == BODY_SHAPE::Circle) {
-		CreateCircleBody(m_position, m_radius, m_isStatic);
-	}
 
-	m_transformRequired = true;
-	m_aabbUpdateRequired = true;
+	m_transformedVertices = m_vertices;
 
-	GetTransformedVertices();
+	UpdateVertices();
 }
 
-void RigidBody::CreateBoxBody(sf::Vector2f pos, float width, float height, bool isStatic) {
+void RigidBody::CreateBoxBody(sf::Vector2f pos, float width, float height, RigidBodyPhysicsData data, bool isStatic) {
+	ClearVertexData();
+	ClearAllForces();
+
 	m_shape = BODY_SHAPE::Box;
+	m_position = pos;
 	m_width = width;
 	m_height = height;
-	m_position = pos;
+	m_data = data;
 	m_isStatic = isStatic;
-	CreateBoxVertices();
-	CreateBoxTriangles();
 
+	CalculateMassAndInertia();
+
+	CreateBoxVertices();
 	m_transformedVertices = m_vertices;
 
 	m_transformRequired = true;
@@ -64,14 +54,24 @@ void RigidBody::CreateBoxBody(sf::Vector2f pos, float width, float height, bool 
 	GetTransformedVertices();
 }
 
-void RigidBody::CreateCircleBody(sf::Vector2f pos, float radius, bool isStatic) {
+void RigidBody::CreateCircleBody(sf::Vector2f pos, float radius, RigidBodyPhysicsData data, bool isStatic) {
+	ClearVertexData();
+	ClearAllForces();
+
 	m_shape = BODY_SHAPE::Circle;
-	m_radius = radius;
-	m_isStatic = isStatic;
 	m_position = pos;
+	m_radius = radius;
+	m_data = data;
+	m_isStatic = isStatic;
 
-	m_vertices.push_back({0.f,0.f});
+	static sf::Texture texture;
+	if (texture.getSize().x == 0.f)
+		texture.loadFromFile("res/textures/circle.png");
+	m_renderBody.setTexture(&texture);
 
+	CalculateMassAndInertia();
+
+	m_vertices.push_back({ 0.f,0.f });
 	m_transformedVertices = m_vertices;
 
 	m_transformRequired = true;
@@ -83,84 +83,112 @@ void RigidBody::CreateCircleBody(sf::Vector2f pos, float radius, bool isStatic) 
 void RigidBody::Step(float t)
 {
 	if (m_isStatic) {
-		GetTransformedVertices();
+		UpdateVertices();
 		return;
 	}
 
-	m_linearVelocity += m_force/m_data.Mass * t;
-	//m_linearVelocity.y -= 9.81f * t;
+	m_linearVelocity += m_linearImpulse * t;
+	m_linearVelocity += m_linearForce * t;
+
+	m_rotationalVelocity += m_rotationalImpulse.asRadians() * m_data.InvInertia * t;
+	m_rotationalVelocity += m_rotationalForce.asRadians() * t;
+
+	m_rotation += sf::radians(m_rotationalVelocity * t);
+
 	m_position += m_linearVelocity * t;
-
-	m_rotation += (m_rotationalVelocity * t) * 180.f/PI;
-
 	Collision::m_bodiesToUpdate.insert(this);
 
-	m_force = sf::Vector2f{ 0.f,0.f };
+	m_rotationalImpulse = sf::degrees(0.f);
+	m_linearImpulse = { 0.f,0.f };
+
 	m_transformRequired = true;
 	m_aabbUpdateRequired = true;
-
-	GetTransformedVertices();
+	UpdateVertices();
 }
 
 void RigidBody::Render(sf::RenderWindow& window)
 {
-	sf::RectangleShape body;
-	static sf::Texture texture;
-	switch (m_shape)
-	{
-	case BODY_SHAPE::Circle:
-		body.setSize(sf::Vector2f(2.f * m_radius, 2.f * m_radius));
-		body.setOrigin(body.getSize() / 2.f);
-		body.setPosition(m_position);
-		body.setFillColor(color);
-		if (texture.getSize().x == 0.f)
-			texture.loadFromFile("res/circle.png");
-		body.setTexture(&texture);
-
-		window.draw(body);
-		break;
-	default:
-		std::vector<sf::Vertex> m_vertexes;
-		std::vector<sf::Vector2f> m_vertices = GetTransformedVertices();
-		for (auto& v : m_triangles)
-			m_vertexes.push_back(sf::Vertex(m_vertices[v],color));
-
-		window.draw(m_vertexes.data(), m_vertexes.size(), sf::PrimitiveType::Triangles);
-		break;
-	}
-
-
+	window.draw(m_renderBody);
 }
 
-void RigidBody::SetPosition(sf::Vector2f positionVec)
-{
-	m_position = positionVec;
-	Collision::m_bodiesToUpdate.insert(this);
-	m_aabbUpdateRequired = true;
-	m_transformRequired = true;
-}
-
-void RigidBody::Move(sf::Vector2f moveVec)
+//Modifiers
+void RigidBody::Move(const sf::Vector2f& moveVec)
 {
 	m_position += moveVec;
-	Collision::m_bodiesToUpdate.insert(this);
 	m_aabbUpdateRequired = true;
 	m_transformRequired = true;
 }
 
-void RigidBody::Rotate(float angle)
+void RigidBody::Rotate(const sf::Angle& angle)
 {
 	m_rotation += angle;
-	Collision::m_bodiesToUpdate.insert(this);
 	m_aabbUpdateRequired = true;
 	m_transformRequired = true;
 }
 
-void RigidBody::AddImpulse(sf::Vector2f impulse)
+void RigidBody::SetPosition(const sf::Vector2f& positionVec)
 {
-	m_force = impulse;
+	m_position = positionVec;
+	m_aabbUpdateRequired = true;
+	m_transformRequired = true;
 }
 
+void RigidBody::SetRotation(const sf::Angle& angle)
+{
+	m_rotation = angle;
+	m_aabbUpdateRequired = true;
+	m_transformRequired = true;
+}
+
+//Physics
+void RigidBody::AddLinearImpulse(const sf::Vector2f& impulse)
+{
+	m_linearImpulse += impulse;
+}
+
+void RigidBody::AddLinearForce(const sf::Vector2f& force)
+{
+	m_linearForce += force;
+}
+
+void RigidBody::SetVelocity(const sf::Vector2f& velocity) {
+	m_linearVelocity = velocity;
+}
+
+void RigidBody::ClearLinearForce()
+{
+	m_linearForce = { 0.f,0.f };
+}
+
+void RigidBody::AddRotationalImpulse(const sf::Angle& impulse)
+{
+	m_rotationalImpulse += impulse;
+}
+
+void RigidBody::AddRotationalForce(const sf::Angle& rotationalForce)
+{
+	m_rotationalForce += rotationalForce;
+}
+
+void RigidBody::SetRotationalVelocity(const sf::Angle& velocity) {
+	m_rotationalVelocity = velocity.asRadians();
+}
+
+void RigidBody::ClearRotationalForce()
+{
+	m_rotationalForce = sf::degrees(0.f);
+}
+
+void RigidBody::ClearAllForces()
+{
+	m_linearForce = { 0.f,0.f };
+	m_rotationalForce = sf::degrees(0.f);
+
+	m_linearImpulse = { 0.f,0.f };
+	m_rotationalImpulse = sf::degrees(0.f);
+}
+
+//Accessors
 sf::Vector2f RigidBody::GetPosition()
 {
 	return m_position;
@@ -171,32 +199,26 @@ sf::Vector2f RigidBody::GetVelocity()
 	return m_linearVelocity;
 }
 
-void RigidBody::CreateBoxVertices()
+sf::Vector2f RigidBody::GetSize()
 {
-	float left = -m_width / 2.f;
-	float right = left + m_width;
-	float bottom = -m_height / 2.f;
-	float top = bottom + m_height;
-
-	std::vector<sf::Vector2f> vertices;
-	vertices.push_back(sf::Vector2f(left,	top));
-	vertices.push_back(sf::Vector2f(right,	top));
-	vertices.push_back(sf::Vector2f(right,	bottom));
-	vertices.push_back(sf::Vector2f(left,	bottom));
-
-	m_vertices = vertices;
+	if (m_shape == BODY_SHAPE::Box)
+		return sf::Vector2f(m_width, m_height);
+	else
+		return sf::Vector2f(2.f * m_radius, 2.f * m_radius);
 }
 
-void RigidBody::CreateBoxTriangles()
+sf::Angle RigidBody::GetRotation()
 {
-	std::vector<int> triangles;
-	triangles.push_back(0);
-	triangles.push_back(1);
-	triangles.push_back(2);
-	triangles.push_back(0);
-	triangles.push_back(2);
-	triangles.push_back(3);
-	m_triangles = triangles;
+	return sf::Angle(m_rotation);
+}
+
+sf::Angle RigidBody::GetRotationalVelocity() {
+	return sf::radians(m_rotationalVelocity);
+}
+
+void RigidBody::SetOnIntersection(std::function<void(RigidBody*)> fun)
+{
+	m_onIntersection = fun;
 }
 
 BODY_SHAPE RigidBody::GetShape()
@@ -212,13 +234,13 @@ AABB RigidBody::GetAABB()
 		sf::Vector2f max;
 		if (m_shape == BODY_SHAPE::Circle)
 		{
-			min = { m_position.x - m_radius, m_position.y - m_radius};
-			max = { m_position.x + m_radius, m_position.y + m_radius};
+			min = { m_position.x - m_radius, m_position.y - m_radius };
+			max = { m_position.x + m_radius, m_position.y + m_radius };
 		}
 		else
 		{
-			float minX =  INFINITY;
-			float minY =  INFINITY;
+			float minX = INFINITY;
+			float minY = INFINITY;
 			float maxX = -INFINITY;
 			float maxY = -INFINITY;
 			for (auto& v : m_transformedVertices)
@@ -240,58 +262,45 @@ AABB RigidBody::GetAABB()
 	return m_aabb;
 }
 
+sf::RectangleShape& RigidBody::GetRenderBody() {
+	return m_renderBody;
+}
+
 std::vector<sf::Vector2f> RigidBody::GetTransformedVertices()
 {
-	if (m_transformRequired) //this is so fucking stupid im gonna cry
-	{	
-		float sin = sinf(m_rotation * PI/180.f );
-		float cos = cosf(m_rotation * PI/180.f );
-
-		for (int i = 0; i < m_vertices.size(); i++)
-		{
-			auto& v = m_vertices[i];
-			float rx = cos * v.x - sin * v.y;
-			float ry = sin * v.x + cos * v.y;
-
-			m_transformedVertices[i] = sf::Vector2f(rx + m_position.x, ry + m_position.y);
-		}
-	}
-
-	m_transformRequired = false;
+	UpdateVertices();
 	return m_transformedVertices;
 }
 
-bool AABB::contains(sf::Vector2f point)
+void RigidBody::CreateBoxVertices()
 {
-	if (point.x < lowerBound.x || point.x > upperBound.x)
-		return false;
-	if (point.y < lowerBound.y || point.y > upperBound.y)
-		return false;
-	return true;
+	float left = -m_width / 2.f;
+	float right = left + m_width;
+	float bottom = -m_height / 2.f;
+	float top = bottom + m_height;
+
+	std::vector<sf::Vector2f> vertices;
+	vertices.push_back(sf::Vector2f(left, top));
+	vertices.push_back(sf::Vector2f(right, top));
+	vertices.push_back(sf::Vector2f(right, bottom));
+	vertices.push_back(sf::Vector2f(left, bottom));
+
+	m_vertices = vertices;
 }
 
-bool AABB::contains(AABB other)
+void RigidBody::CalculateMassAndInertia()
 {
-	return contains(other.lowerBound) && contains(other.upperBound);
-}
+	//Calculate Mass and inertia
+	if (!m_isStatic) {
+		CalculateRotationalInertia();
+	}
+	else {
+		m_data.Mass = 0.f;
+		m_data.Inertia = 0.f;
+	}
 
-bool AABB::intersects(AABB other)
-{
-	return (lowerBound.x <= other.upperBound.x && upperBound.x >= other.lowerBound.x) &&
-		(lowerBound.y <= other.upperBound.y && upperBound.y >= other.lowerBound.y);
-}
-
-float AABB::GetPerimeter()
-{
-	sf::Vector2f d = upperBound - lowerBound;
-	return d.x * d.y;
-}
-
-float AABB::GetArea()
-{
-	sf::Vector2f d = upperBound - lowerBound;
-
-	return 2.0f * d.x * d.y;
+	m_data.InvMass = m_data.Mass == 0.f ? 0.f : 1.f / m_data.Mass;
+	m_data.InvInertia = m_data.Inertia == 0.f ? 0.f : 1.f / m_data.Inertia;
 }
 
 void RigidBody::CalculateRotationalInertia()
@@ -307,4 +316,51 @@ void RigidBody::CalculateRotationalInertia()
 	default:
 		break;
 	}
+}
+
+void RigidBody::UpdateVertices()
+{
+	if (m_transformRequired)
+	{
+		float sin = sinf(m_rotation.asRadians());
+		float cos = cosf(m_rotation.asRadians());
+
+		for (int i = 0; i < m_vertices.size(); i++)
+		{
+			auto& v = m_vertices[i];
+			float rx = cos * v.x - sin * v.y;
+			float ry = sin * v.x + cos * v.y;
+
+			m_transformedVertices[i] = sf::Vector2f(rx + m_position.x, ry + m_position.y);
+		}
+
+		if (m_nodeIndex != INVALID_ID)
+			Collision::m_bodiesToUpdate.insert(this);
+
+		//Only for rendering
+		switch (m_shape)
+		{
+		case BODY_SHAPE::Circle:
+			m_renderBody.setSize(GetSize());
+			m_renderBody.setOrigin(GetSize() / 2.f);
+			m_renderBody.setPosition(GetPosition());
+			m_renderBody.setRotation(GetRotation());
+			break;
+		case BODY_SHAPE::Box:
+			m_renderBody.setSize(GetSize());
+			m_renderBody.setOrigin(GetSize() / 2.f);
+			m_renderBody.setPosition(GetPosition());
+			m_renderBody.setRotation(GetRotation());
+			break;
+		}
+	}
+	m_transformRequired = false;
+}
+
+void RigidBody::ClearVertexData()
+{
+	m_vertices.clear();
+	m_transformedVertices.clear();
+	m_position = { 0.f,0.f };
+	m_rotation = sf::degrees(0.f);
 }

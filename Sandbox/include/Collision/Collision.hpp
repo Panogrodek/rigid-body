@@ -15,6 +15,7 @@ public:
 	static void AddBody(RigidBody* body);
 
 	static void RemoveBody(int index);
+	static void Validate(RigidBody* object);
 private:
 	static bool CheckCollision(RigidBody* b1, RigidBody* b2, sf::Vector2f& mtv);
 	static void ResolveCollision(CollisionManifold& manifold);

@@ -1,6 +1,10 @@
 #pragma once
 #include "Dynamics/RigidBody.hpp"
 
+/*
+This collision is taken from my good friend https://github.com/xSnapi. Please check out his work at:
+https://github.com/xSnapi/SAT-Collision
+*/
 
 constexpr float INF = std::numeric_limits<float>::infinity();
 
